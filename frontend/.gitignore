@@ -1,0 +1,37 @@
+# ========================
+# Node.js & Vue (Frontend)
+# ========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+
+# ========================
+# Python & FastAPI (Backend)
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.env
+
+# ========================
+# Database Lokal
+# ========================
+database.db
+*.sqlite3
+
+# ========================
+# OS & Editor
+# ========================
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

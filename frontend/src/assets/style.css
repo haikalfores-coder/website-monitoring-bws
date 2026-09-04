@@ -1,0 +1,40 @@
+/* Mengimpor direktif inti Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Menambahkan custom class ke dalam layer Tailwind */
+@layer components {
+  /* Class untuk efek glassmorphism utama (menggunakan konfigurasi dari tailwind.config.js) */
+  .glass {
+    @apply bg-glass-bg backdrop-blur-glass border border-glass-border shadow-glass;
+  }
+  
+  /* Class khusus untuk efek navbar semi-transparan */
+  .glass-header {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* 
+  Pengaturan khusus untuk tampilan cetak (Print/PDF)
+  Menghilangkan efek transparan dan warna background agar tinta lebih hemat
+*/
+@media print {
+  .no-print { 
+    display: none !important; 
+  }
+  .glass { 
+    background: white !important; 
+    box-shadow: none !important; 
+    border: 1px solid #ccc !important; 
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  body { 
+    background: white !important; 
+  }
+}
