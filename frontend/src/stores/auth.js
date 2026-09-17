@@ -10,7 +10,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       try {
-        // Blok ini untuk terhubung langsung ke backend FastAPI menggunakan URL dari Vercel
+        // Terhubung langsung ke backend FastAPI menggunakan URL dari Vercel
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
           method: 'POST',
           headers: {
@@ -27,30 +27,11 @@ export const useAuthStore = defineStore('auth', {
           return true
         }
 
-        // Fallback mockup jika server backend belum dijalankan (hanya untuk testing UI)
-        if (username === 'admin' && password === 'admin') {
-          this.username = 'admin'
-          this.role = 'admin'
-          this.isAuthenticated = true
-          return true
-        } else if (username === 'super' && password === 'super') {
-          this.username = 'super'
-          this.role = 'superuser'
-          this.isAuthenticated = true
-          return true
-        }
-
+        // Jika respons server gagal (misal salah password), langsung kembalikan false
         return false
       } catch (error) {
         console.error('Terjadi kesalahan saat login:', error)
-        
-        // Fallback darurat jika koneksi ke server gagal (misal: FastAPI belum menyala)
-        if (username === 'admin' && password === 'admin') {
-          this.username = 'admin'; this.role = 'admin'; this.isAuthenticated = true; return true
-        } else if (username === 'super' && password === 'super') {
-          this.username = 'super'; this.role = 'superuser'; this.isAuthenticated = true; return true
-        }
-        
+        // Jika koneksi server putus, langsung kembalikan false (tidak ada lagi auto-login)
         return false
       }
     },
