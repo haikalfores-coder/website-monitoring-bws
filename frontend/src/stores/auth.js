@@ -10,8 +10,11 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       try {
-        // Terhubung langsung ke backend FastAPI menggunakan URL dari Vercel
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+        // Mencegah error 308/405 dengan menghapus garis miring berlebih di akhir URL dari Vercel
+        const cleanUrl = import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+        
+        // Terhubung langsung ke backend FastAPI menggunakan cleanUrl
+        const response = await fetch(`${cleanUrl}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -27,7 +30,7 @@ export const useAuthStore = defineStore('auth', {
           return true
         }
 
-        // Jika respons server gagal (misal salah password), langsung kembalikan false
+        // Jika respons server gagal (misal salah password), kembalikan false
         return false
       } catch (error) {
         console.error('Terjadi kesalahan saat login:', error)
