@@ -34,6 +34,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def buat_user_default():
     db = SessionLocal()
     try:
+        # --- PERINTAH BARU: Hapus akun 'admin' dan 'super' lama jika ada ---
+        akun_lama = db.query(User).filter(User.username.in_(["admin", "super"])).all()
+        for akun in akun_lama:
+            db.delete(akun)
+            print(f"Akun lama '{akun.username}' berhasil dihapus!")
+        # -------------------------------------------------------------------
+
         # Daftar akun default: Tepat 4 Admin dan 3 Superuser
         default_users = [
             {"username": "admin1", "password": "admin1", "role": "admin"},
