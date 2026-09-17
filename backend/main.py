@@ -14,12 +14,9 @@ app = FastAPI(
 )
 
 # Konfigurasi CORS (Cross-Origin Resource Sharing)
-# CATATAN: JANGAN tambahkan slash '/' di paling akhir domain Netlify/Firebase!
+# Menggunakan ["*"] agar semua URL Vercel Anda otomatis diizinkan masuk
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://starlit-starburst-b4f3be.netlify.app",  # Perbaikan: Slash '/' di ujung sudah dihapus
-    "https://monitoring-bws-b8e36.web.app",          # Perbaikan: Slash '/' di ujung sudah dihapus
+    "*"
 ]
 
 app.add_middleware(
@@ -46,11 +43,11 @@ def check_health():
     }
 
 if __name__ == "__main__":
-    # Server hosting (Render/Railway) akan memberikan Port dinamis lewat environment variable.
+    # Server hosting (Render/Railway/Back4App) akan memberikan Port dinamis lewat environment variable.
     port = int(os.environ.get("PORT", 8000))
     
     # Reload diaktifkan hanya jika dijalankan secara lokal (development mode)
-    # Jika di Render, disarankan reload=False agar server lebih cepat dan hemat resource.
+    # Jika di Render/Back4App, disarankan reload=False agar server lebih cepat dan hemat resource.
     is_dev = os.environ.get("ENVIRONMENT", "production") == "development"
     
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=is_dev)
