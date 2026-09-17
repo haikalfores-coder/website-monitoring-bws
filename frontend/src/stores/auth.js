@@ -10,8 +10,8 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username, password) {
       try {
-        // Blok ini untuk terhubung langsung ke backend FastAPI
-        const response = await fetch('/api/login', {
+        // Blok ini untuk terhubung langsung ke backend FastAPI menggunakan URL dari Vercel
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
