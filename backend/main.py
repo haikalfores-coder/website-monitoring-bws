@@ -1,4 +1,3 @@
-#main.py
 import os
 import uvicorn
 from fastapi import FastAPI
@@ -35,21 +34,31 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def buat_user_default():
     db = SessionLocal()
     try:
-        # 1. Cek dan buat akun Admin
-        admin_user = db.query(User).filter(User.username == "admin").first()
-        if not admin_user:
-            hashed_password = pwd_context.hash("admin")
-            admin_baru = User(username="admin", password_hash=hashed_password, role="admin")
-            db.add(admin_baru)
-            print("Akun 'admin' berhasil dibuat otomatis!")
+        # Daftar akun default: Tepat 4 Admin dan 3 Superuser
+        default_users = [
+            {"username": "admin1", "password": "admin1", "role": "admin"},
+            {"username": "admin2", "password": "admin2", "role": "admin"},
+            {"username": "admin3", "password": "admin3", "role": "admin"},
+            {"username": "admin4", "password": "admin4", "role": "admin"},
+            {"username": "super1", "password": "super1", "role": "superuser"},
+            {"username": "super2", "password": "super2", "role": "superuser"},
+            {"username": "super3", "password": "super3", "role": "superuser"},
+        ]
 
-        # 2. Cek dan buat akun Superuser
-        super_user = db.query(User).filter(User.username == "super").first()
-        if not super_user:
-            hashed_password = pwd_context.hash("super")
-            super_baru = User(username="super", password_hash=hashed_password, role="superuser")
-            db.add(super_baru)
-            print("Akun 'super' berhasil dibuat otomatis!")
+        for user_data in default_users:
+            # Cek apakah username sudah ada di database
+            existing_user = db.query(User).filter(User.username == user_data["username"]).first()
+            
+            if not existing_user:
+                hashed_password = pwd_context.hash(user_data["password"])
+                # Menyesuaikan dengan kolom 'password_hash' di model Anda
+                user_baru = User(
+                    username=user_data["username"], 
+                    password_hash=hashed_password, 
+                    role=user_data["role"]
+                )
+                db.add(user_baru)
+                print(f"Akun '{user_data['username']}' berhasil dibuat otomatis!")
 
         db.commit()
     finally:
