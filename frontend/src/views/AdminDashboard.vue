@@ -213,7 +213,7 @@
             </div>
 
             <div class="flex flex-col md:col-span-1">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto</label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
               <div v-if="!imagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -422,7 +422,6 @@
     <div v-if="isPhotoModalOpen" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[999] p-4 backdrop-blur-sm print:hidden">
       <div class="relative bg-white p-2 rounded-xl max-w-3xl w-full flex flex-col items-center">
         <button @click="isPhotoModalOpen = false" class="absolute -top-12 right-0 text-white text-4xl hover:text-gray-300">&times;</button>
-        <!-- Asumsi API mengembalikan url foto lengkap -->
         <img :src="currentPhoto" alt="Dokumentasi" class="max-h-[80vh] w-full object-contain rounded-lg">
       </div>
     </div>
@@ -456,10 +455,32 @@
                 <span class="font-bold text-blue-700 w-12 text-right">{{ editFormData.progress }}%</span>
               </div>
             </div>
+
+            <!-- Upload Foto di Modal Edit -->
+            <div class="md:col-span-2 flex flex-col mt-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional - Biarkan jika tidak diganti)</span></label>
+              <div v-if="!editImagePreview" class="flex-1 flex items-center justify-center w-full">
+                <label for="edit-dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto baru</span></p>
+                  </div>
+                  <input id="edit-dropzone-file" ref="editFileInput" type="file" accept="image/*" class="hidden" @change="handleEditFileUpload" />
+                </label>
+              </div>
+              <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
+                <img :src="editImagePreview" class="max-h-48 object-contain rounded shadow-sm">
+                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Ganti Foto"><i class="fas fa-trash-alt text-xs"></i></button>
+              </div>
+            </div>
+            
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
             <button type="button" @click="closeEditModal" class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition">Batal</button>
-            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition">Simpan Perubahan</button>
+            <button type="submit" :disabled="isSubmittingEdit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-md transition">
+              <i v-if="isSubmittingEdit" class="fas fa-spinner fa-spin mr-2"></i>
+              {{ isSubmittingEdit ? 'Menyimpan...' : 'Simpan Perubahan' }}
+            </button>
           </div>
         </form>
       </div>
@@ -482,7 +503,7 @@ const isSidebarOpen = ref(false)
 const activeMenu = ref('dashboard') 
 const searchQuery = ref('') 
 const activeTab = ref('aktif') 
-const isSubmitting = ref(false) // Ditambahkan untuk efek loading submit
+const isSubmitting = ref(false)
 
 const extractLokasi = (text) => {
   if (!text) return ''
@@ -516,7 +537,13 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 const showForm = ref(false); const selectedFile = ref(null); const imagePreview = ref(''); const fileInput = ref(null) 
 const formData = reactive({ nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
 const isPhotoModalOpen = ref(false); const currentPhoto = ref('')
+
 const isEditModalOpen = ref(false)
+const isSubmittingEdit = ref(false)
+const editSelectedFile = ref(null)
+const editImagePreview = ref('')
+const editFileInput = ref(null)
+
 const editFormData = reactive({ id: null, nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', foto_url: '', preview_url: '', tanggal_mulai: '', tanggal_selesai: '' })
 
 const selectedToPrint = ref([])
@@ -591,13 +618,11 @@ const toggleSelectAllSelesai = () => {
 
 const activitiesToPrint = computed(() => myActivities.value.filter(keg => selectedToPrint.value.includes(keg.id)))
 
-// --- FITUR PREVIEW GAMBAR (HANYA UNTUK TAMPILAN) ---
+// --- FITUR PREVIEW GAMBAR (FORM TAMBAH) ---
 const handleFileUpload = (e) => {
   const file = e.target.files[0]; 
   if (file) { 
     selectedFile.value = file; 
-    
-    // Preview Base64 (Hanya untuk UI saja, tidak dikirim ke DB)
     const reader = new FileReader();
     reader.onload = (event) => {
       imagePreview.value = event.target.result;
@@ -608,17 +633,30 @@ const handleFileUpload = (e) => {
 
 const removeImage = () => { selectedFile.value = null; imagePreview.value = ''; if (fileInput.value) fileInput.value.value = '' }
 
-// --- MODIFIKASI SUBMIT ACTIVITY (MENGGUNAKAN FORMDATA UNTUK API) ---
-const submitActivity = async () => {
-  if (!selectedFile.value) { 
-    alert('Harap unggah foto!'); 
-    return; 
+// --- FITUR PREVIEW GAMBAR (FORM EDIT) ---
+const handleEditFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    editSelectedFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      editImagePreview.value = event.target.result;
+    };
+    reader.readAsDataURL(file);
   }
-  
+}
+
+const removeEditImage = () => {
+  editSelectedFile.value = null;
+  editImagePreview.value = '';
+  if (editFileInput.value) editFileInput.value.value = '';
+}
+
+// --- SUBMIT ACTIVITY (TAMBAH DATA) ---
+const submitActivity = async () => {
   isSubmitting.value = true;
   const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`;
   
-  // 1. Inisialisasi FormData untuk HTTP Request multipart/form-data
   const formDataApi = new FormData();
   formDataApi.append('nama_kegiatan', formData.nama_kegiatan);
   formDataApi.append('item_kegiatan', lokasiDenganTag);
@@ -627,19 +665,17 @@ const submitActivity = async () => {
   formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
   formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
   
-  // 2. Masukkan object File fisik, BUKAN string base64
-  formDataApi.append('foto', selectedFile.value); 
+  // (Hanya di-append jika foto diunggah / Opsional)
+  if (selectedFile.value) {
+    formDataApi.append('foto', selectedFile.value); 
+  }
 
   try {
-    // 3. Kirim FormData ke Pinia Store / API Backend
     await activityStore.addActivity(formDataApi);
     
-    // 4. Bersihkan Form setelah sukses
     Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' });
     removeImage(); 
     showForm.value = false;
-    // Opsi: Panggil fungsi ini jika API Anda tidak mereturn data terbaru langsung
-    // await activityStore.fetchActivities();
   } catch (error) {
     console.error("Gagal saat submit data:", error);
     alert('Terjadi kesalahan saat menyimpan data ke server!');
@@ -648,9 +684,7 @@ const submitActivity = async () => {
   }
 }
 
-// Catatan: Pastikan endpoint API Anda mereturn/menyimpan URL gambar, misalnya: `keg.foto_url` = 'https://api.anda.com/uploads/foto123.jpg'
 const openPhotoModal = (keg) => { 
-  // Gunakan foto_url yang direturn dari backend
   currentPhoto.value = keg.foto_url || `https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto`; 
   isPhotoModalOpen.value = true 
 }
@@ -659,16 +693,53 @@ const openEditModal = (keg) => {
   Object.assign(editFormData, keg); 
   editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
   editFormData.status = getDisplayStatus(keg); 
+  
+  // Tampilkan gambar lama pada preview edit jika ada
+  editImagePreview.value = keg.foto_url || '';
+  editSelectedFile.value = null;
+
   isEditModalOpen.value = true 
 }
 
-const closeEditModal = () => isEditModalOpen.value = false
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  removeEditImage();
+}
+
+// --- SUBMIT EDIT ACTIVITY ---
 const submitEdit = async () => { 
-  const updatedData = { ...editFormData }
-  updatedData.item_kegiatan = `[${authStore.username}] ${editFormData.item_kegiatan}`
-  
-  await activityStore.updateActivity(updatedData); 
-  closeEditModal() 
+  isSubmittingEdit.value = true;
+  try {
+    const lokasiDenganTag = `[${authStore.username}] ${editFormData.item_kegiatan}`;
+
+    // Jika ada file FOTO BARU, gunakan FormData
+    if (editSelectedFile.value) {
+      const formDataApi = new FormData();
+      formDataApi.append('id', editFormData.id);
+      formDataApi.append('nama_kegiatan', editFormData.nama_kegiatan);
+      formDataApi.append('item_kegiatan', lokasiDenganTag);
+      formDataApi.append('progress', editFormData.progress);
+      formDataApi.append('status', editFormData.status);
+      formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai || '');
+      formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai || '');
+      formDataApi.append('foto', editSelectedFile.value);
+
+      await activityStore.updateActivity(formDataApi);
+    } 
+    // Jika TIDAK ADA foto baru, kirim object biasa agar kompatibel (tidak memutus foto lama)
+    else {
+      const updatedData = { ...editFormData };
+      updatedData.item_kegiatan = lokasiDenganTag;
+      await activityStore.updateActivity(updatedData);
+    }
+
+    closeEditModal();
+  } catch (error) {
+    console.error("Gagal saat mengupdate data:", error);
+    alert('Terjadi kesalahan saat mengupdate data!');
+  } finally {
+    isSubmittingEdit.value = false;
+  }
 }
 
 const handleDelete = async (id) => { 
