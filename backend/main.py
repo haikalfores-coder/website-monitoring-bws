@@ -2,11 +2,12 @@ import os
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from passlib.context import CryptContext  # Tambahan untuk hash password
+from fastapi.staticfiles import StaticFiles  # <-- TAMBAHAN WAJIB
+from passlib.context import CryptContext  
 
 # Import rute dan database
 from routes import router
-from models import Base, engine, SessionLocal, User  # Tambahan import SessionLocal dan User
+from models import Base, engine, SessionLocal, User  
 
 app = FastAPI(
     title="API Monitoring BWS Sumatera III",
@@ -25,6 +26,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- TAMBAHAN WAJIB: BUAT DAN BUKA AKSES FOLDER UPLOADS ---
+os.makedirs("uploads", exist_ok=True) # Buat folder otomatis jika belum ada
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# ---------------------------------------------------------
+
 # Membuat tabel di database saat server pertama kali berjalan
 Base.metadata.create_all(bind=engine)
 
@@ -34,12 +40,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def buat_user_default():
     db = SessionLocal()
     try:
-        # --- PERINTAH BARU: Hapus akun 'admin' dan 'super' lama jika ada ---
+        # Hapus akun 'admin' dan 'super' lama jika ada
         akun_lama = db.query(User).filter(User.username.in_(["admin", "super"])).all()
         for akun in akun_lama:
             db.delete(akun)
             print(f"Akun lama '{akun.username}' berhasil dihapus!")
-        # -------------------------------------------------------------------
 
         # Daftar akun default: Tepat 4 Admin dan 3 Superuser
         default_users = [
