@@ -205,11 +205,9 @@
                 <h4 class="font-semibold text-sm text-gray-800 mb-3"><i class="fas fa-lock mr-2 text-gray-400"></i>Ganti Password</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <!-- V-model ditambahkan di sini -->
                     <input v-model="passwords.baru" type="password" placeholder="Password Baru" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50 focus:bg-white">
                   </div>
                   <div>
-                    <!-- V-model ditambahkan di sini -->
                     <input v-model="passwords.konfirmasi" type="password" placeholder="Konfirmasi Password" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50 focus:bg-white">
                   </div>
                 </div>
