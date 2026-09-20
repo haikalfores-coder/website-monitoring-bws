@@ -1,5 +1,9 @@
 <template>
   <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
+    
+    <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
+
     <!-- SIDEBAR -->
     <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <div class="sidebar-brand">
@@ -12,7 +16,7 @@
 
       <nav class="sidebar-menu">
         <div class="menu-title">MENU UTAMA</div>
-        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop()" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
+        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
           <i class="fa-solid fa-house"></i>
           <span>Dashboard & Data</span>
         </a>
@@ -23,12 +27,12 @@
         </a>
 
         <div class="menu-title">SISTEM & AKUN</div>
-        <a href="#" @click.prevent="activeMenu = 'akun'; scrollToTop()" class="menu-item" :class="{ 'active': activeMenu === 'akun' }">
+        <a href="#" @click.prevent="activeMenu = 'akun'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'akun' }">
           <i class="fa-solid fa-users-gear"></i>
           <span>Manajemen Akun</span>
         </a>
 
-        <router-link to="/superuser-profil" class="menu-item">
+        <router-link to="/superuser-profil" class="menu-item" @click="isSidebarOpen = false">
           <i class="fa-solid fa-user"></i>
           <span>Profil Saya</span>
         </router-link>
@@ -45,16 +49,18 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
       
+      <!-- TOPBAR -->
       <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
         <div class="topbar-left">
+          <!-- Tombol Hamburger Toggle -->
           <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="page-title">
-            <h1 v-if="activeMenu === 'dashboard'">Dashboard {{ myRoleTitle }}</h1>
-            <h1 v-if="activeMenu === 'akun'">Manajemen Akun</h1>
-            <p v-if="activeMenu === 'dashboard'">Monitoring Seluruh Sektor Sungai</p>
-            <p v-if="activeMenu === 'akun'">Pengaturan Akses Pengguna Sistem</p>
+          <div class="page-title hidden sm:block">
+            <h1 v-if="activeMenu === 'dashboard'" class="text-xl font-bold text-gray-800">Dashboard {{ myRoleTitle }}</h1>
+            <h1 v-if="activeMenu === 'akun'" class="text-xl font-bold text-gray-800">Manajemen Akun</h1>
+            <p v-if="activeMenu === 'dashboard'" class="text-xs text-gray-500">Monitoring Seluruh Sektor Sungai</p>
+            <p v-if="activeMenu === 'akun'" class="text-xs text-gray-500">Pengaturan Akses Pengguna Sistem</p>
           </div>
         </div>
 
@@ -66,14 +72,14 @@
               </div>
               <div class="admin-info hidden sm:block">
                 <!-- NAMA DAN JABATAN KINI DINAMIS SESUAI AKUN YANG LOGIN -->
-                <strong class="block text-sm text-gray-800">@{{ authStore.username }}</strong>
+                <strong class="block text-sm text-gray-800">{{ authStore.username }}</strong>
                 <span class="block text-xs text-gray-500">{{ myRoleTitle }}</span>
               </div>
               <i class="fa-solid fa-chevron-down profile-arrow text-gray-400 text-xs transition-transform duration-300" :class="{'rotate-180': isProfileMenuOpen}"></i>
             </div>
 
             <transition name="fade-slide">
-              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                 <router-link to="/superuser-profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                   <i class="fas fa-user mr-2 w-4 text-center"></i> Profil Saya
                 </router-link>
@@ -189,7 +195,7 @@
             </div>
 
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr class="border-b bg-gray-50">
                     <th v-if="activeTab === 'selesai'" class="p-4 w-12 text-center">
@@ -221,7 +227,7 @@
                     
                     <td class="p-4">
                       <!-- Badge Nama Admin Pembuat Data -->
-                      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold border border-gray-200">
+                      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-bold border border-gray-200 whitespace-nowrap">
                         <i class="fas fa-user-edit mr-1"></i> {{ parseLokasi(keg.item_kegiatan).username }}
                       </span>
                     </td>
@@ -303,7 +309,7 @@
               <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">{{ systemUsers.length }} Akun</span>
             </div>
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr class="bg-gray-50 text-gray-600 text-sm">
                     <th class="p-4 font-semibold">No</th>
@@ -522,7 +528,7 @@ const displayedActivities = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return baseData.filter(keg => 
     keg.nama_kegiatan.toLowerCase().includes(query) || 
-    keg.item_kegiatan.toLowerCase().includes(query) // Admin's tag is inside item_kegiatan, so search can find "admin1" easily
+    keg.item_kegiatan.toLowerCase().includes(query) 
   )
 })
 
@@ -569,4 +575,8 @@ const handleLogout = () => { authStore.logout(); router.push('/') }
 .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Tambahan class untuk transisi fade menu profil / dropdown lainnya */
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.2s ease; }
+.fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
 </style>

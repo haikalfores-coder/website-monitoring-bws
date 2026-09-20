@@ -1,23 +1,18 @@
 <template>
-  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen flex overflow-hidden">
+  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
     
     <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
     <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <!-- SIDEBAR -->
-    <!-- Ditambahkan class Tailwind fixed, z-50, transition-transform agar responsif di mobile -->
-    <aside
-      class="sidebar print:hidden fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 lg:relative lg:translate-x-0"
-      :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    >
+    <!-- SIDEBAR (Layout dikembalikan ke admin.css) -->
+    <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <!-- BRAND -->
       <div class="sidebar-brand">
         <img
-          src="@/assets/images/logo-pu.png"
+          src="/logo-pu.png"
           alt="Logo PU"
           class="sidebar-logo"
         />
-
         <div class="sidebar-brand-text">
           <strong>BWS SUMATERA III</strong>
           <span>PEKANBARU</span>
@@ -80,12 +75,13 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content flex-1 h-screen overflow-y-auto w-full">
+    <main class="main-content">
       
-      <header class="topbar relative z-30 bg-white shadow-sm flex justify-between items-center px-4 py-3">
-        <div class="topbar-left flex items-center gap-4">
+      <!-- TOPBAR -->
+      <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
+        <div class="topbar-left">
           <!-- Tombol Hamburger Toggle -->
-          <button class="sidebar-toggle text-gray-600 hover:text-blue-600 focus:outline-none lg:hidden text-2xl" @click="isSidebarOpen = !isSidebarOpen">
+          <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="page-title hidden sm:block">
@@ -144,8 +140,8 @@
       </header>
 
       <!-- CONTENT -->
-      <section class="content z-10 p-4 md:p-6">
-        <div class="dashboard-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section class="content z-10 print:hidden">
+        <div class="dashboard-grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- KARTU FOTO PROFIL -->
           <div class="dashboard-card col-span-1 p-6 rounded-2xl border-2 border-blue-50 bg-white shadow-sm flex flex-col items-center text-center">
@@ -209,10 +205,12 @@
                 <h4 class="font-semibold text-sm text-gray-800 mb-3"><i class="fas fa-lock mr-2 text-gray-400"></i>Ganti Password</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <input type="password" placeholder="Password Baru" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50">
+                    <!-- V-model ditambahkan di sini -->
+                    <input v-model="passwords.baru" type="password" placeholder="Password Baru" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50 focus:bg-white">
                   </div>
                   <div>
-                    <input type="password" placeholder="Konfirmasi Password" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50">
+                    <!-- V-model ditambahkan di sini -->
+                    <input v-model="passwords.konfirmasi" type="password" placeholder="Konfirmasi Password" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition bg-gray-50 focus:bg-white">
                   </div>
                 </div>
               </div>
@@ -229,8 +227,10 @@
         </div>
       </section>
 
-      <footer class="main-footer flex flex-wrap items-center justify-center gap-2 p-4 text-sm text-gray-500 mt-auto border-t bg-white relative z-10">
+      <footer class="main-footer flex flex-wrap items-center justify-center gap-2 p-4 text-sm text-gray-500 mt-auto border-t bg-white relative z-10 print:hidden">
         <span>© 2026 Balai Wilayah Sungai Sumatera III Pekanbaru</span>
+        <span class="hidden sm:inline px-1">|</span>
+        <span>Kementerian Pekerjaan Umum</span>
       </footer>
     </main>
   </div>
@@ -245,7 +245,7 @@ import '@/assets/admin.css'
 const router = useRouter()
 const authStore = useAuthStore()
 
-// State Sidebar (DITAMBAHKAN AGAR HAMBURGER BERFUNGSI)
+// State Sidebar 
 const isSidebarOpen = ref(false)
 
 // --- LOGIKA TOPBAR ---
@@ -281,6 +281,12 @@ const profileData = reactive({
   unitKerja: 'Kepala BWS Sumatera III Pekanbaru'
 })
 
+// State untuk validasi password
+const passwords = reactive({
+  baru: '',
+  konfirmasi: ''
+})
+
 onMounted(() => {
   if (!authStore.isAuthenticated || authStore.role !== 'superuser') {
     router.push('/')
@@ -294,9 +300,22 @@ onUnmounted(() => {
 })
 
 const saveProfile = () => {
+  // Pengecekan validasi password
+  if (passwords.baru || passwords.konfirmasi) {
+    if (passwords.baru !== passwords.konfirmasi) {
+      alert('Password baru dan konfirmasi password tidak cocok!')
+      return
+    }
+  }
+
   isSaving.value = true
   setTimeout(() => {
     isSaving.value = false
+    
+    // Kosongkan form password setelah berhasil disimpan
+    passwords.baru = ''
+    passwords.konfirmasi = ''
+    
     alert('Profil Pimpinan berhasil diperbarui!')
   }, 800)
 }
