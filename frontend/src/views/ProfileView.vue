@@ -1,14 +1,10 @@
 <template>
-  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen flex overflow-hidden">
-    
-    <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
-    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
-
-    <!-- SIDEBAR -->
-    <!-- Ditambahkan class Tailwind fixed, z-50, transition-transform agar responsif di mobile -->
-    <aside class="sidebar print:hidden fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 lg:relative lg:translate-x-0" :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
+    <!-- SIDEBAR (Disinkronkan dengan AdminDashboard) -->
+    <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <div class="sidebar-brand">
-        <img src="@/assets/images/logo-pu.png" alt="Logo PU" class="sidebar-logo">
+        <!-- Path logo disamakan dengan dashboard -->
+        <img src="/logo-pu.png" alt="Logo PU" class="sidebar-logo">
         <div class="sidebar-brand-text">
           <strong>BWS SUMATERA III</strong>
           <span>PEKANBARU</span>
@@ -17,27 +13,18 @@
 
       <nav class="sidebar-menu">
         <div class="menu-title">MENU UTAMA</div>
-        <router-link to="/admin" class="menu-item" @click="isSidebarOpen = false">
+        <!-- Link untuk kembali ke halaman Admin Dashboard -->
+        <router-link to="/admin" class="menu-item text-gray-500 hover:bg-gray-100">
           <i class="fa-solid fa-house"></i>
-          <span>Dashboard</span>
+          <span>Dashboard & Data</span>
         </router-link>
-
-        <div class="menu-title">DATA</div>
-        <router-link to="/admin" class="menu-item" @click="isSidebarOpen = false">
-          <i class="fa-solid fa-clipboard-list"></i>
-          <span>Data Kegiatan</span>
-        </router-link>
-        
-        <a href="#" @click.prevent="printLaporan" class="menu-item text-green-600 font-bold bg-green-50">
-          <i class="fa-solid fa-file-pdf"></i>
-          <span>Cetak PDF Laporan</span>
-        </a>
 
         <div class="menu-title">SISTEM</div>
-        <a href="#" class="menu-item active" @click="isSidebarOpen = false">
+        <!-- Menu Profil Aktif -->
+        <router-link to="/profil" class="menu-item active">
           <i class="fa-solid fa-user"></i>
-          <span>Profil</span>
-        </a>
+          <span>Profil Saya</span>
+        </router-link>
       </nav>
 
       <div class="sidebar-bottom">
@@ -49,74 +36,38 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content flex-1 h-screen overflow-y-auto w-full">
+    <main class="main-content">
       
-      <!-- TOPBAR KONSISTEN DENGAN DASHBOARD -->
-      <header class="topbar relative z-30 bg-white shadow-sm flex justify-between items-center px-4 py-3">
-        <div class="topbar-left flex items-center gap-4">
-          <!-- Tombol Hamburger Toggle -->
-          <button class="sidebar-toggle text-gray-600 hover:text-blue-600 focus:outline-none lg:hidden text-2xl" @click="isSidebarOpen = !isSidebarOpen">
+      <!-- TOPBAR (Disinkronkan dengan AdminDashboard) -->
+      <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="page-title hidden sm:block">
-            <h1 class="text-xl font-bold text-gray-800">Profil Pengguna</h1>
-            <p class="text-xs text-gray-500">Manajemen akun dan preferensi sistem</p>
+          <div class="page-title">
+            <h1>Profil Pengguna</h1>
+            <p>Manajemen akun dan kredensial sistem</p>
           </div>
         </div>
 
         <div class="topbar-right flex items-center gap-4 relative">
-          
-          <!-- Notifikasi Interaktif -->
-          <div class="relative" id="notification-menu">
-            <button @click="toggleNotification" class="notification-button hover:bg-gray-100 p-2 rounded-full transition relative">
-              <i class="fa-regular fa-bell text-gray-600 text-xl"></i>
-              <span v-if="unreadNotifications > 0" class="notification-badge bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full absolute -top-1 -right-1 border-2 border-white">
-                {{ unreadNotifications }}
-              </span>
-            </button>
-
-            <!-- Dropdown Notifikasi -->
-            <transition name="fade-slide">
-              <div v-if="isNotificationOpen" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
-                <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                  <h4 class="font-bold text-gray-700">Notifikasi</h4>
-                  <button @click="markAllAsRead" class="text-xs text-blue-600 hover:underline">Tandai dibaca</button>
-                </div>
-                <div class="max-h-72 overflow-y-auto">
-                  <div v-for="notif in notifications" :key="notif.id" class="p-4 border-b border-gray-50 hover:bg-blue-50/50 transition cursor-pointer flex gap-3" :class="{'opacity-60': notif.read}">
-                    <div class="mt-1">
-                      <i class="fas fa-info-circle text-blue-500" v-if="notif.type === 'info'"></i>
-                      <i class="fas fa-check-circle text-green-500" v-else-if="notif.type === 'success'"></i>
-                    </div>
-                    <div>
-                      <p class="text-sm text-gray-800 line-clamp-2">{{ notif.message }}</p>
-                      <span class="text-xs text-gray-400">{{ notif.time }}</span>
-                    </div>
-                  </div>
-                  <div v-if="notifications.length === 0" class="p-6 text-center text-gray-500 text-sm">
-                    Belum ada notifikasi baru.
-                  </div>
-                </div>
-              </div>
-            </transition>
-          </div>
-
-          <!-- Profil Interaktif -->
+          <!-- PROFIL INTERAKTIF -->
           <div class="relative" id="profile-menu">
             <div @click="toggleProfile" class="admin-profile cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition flex items-center gap-3">
               <div class="admin-avatar bg-blue-100 text-blue-600 w-10 h-10 flex items-center justify-center rounded-full">
                 <i class="fa-solid fa-user"></i>
               </div>
               <div class="admin-info hidden sm:block">
-                <strong class="block text-sm text-gray-800">{{ profileData.nama }}</strong>
-                <span class="block text-xs text-gray-500">Administrator</span>
+                <!-- Nama dan Jabatan Dinamis -->
+                <strong class="block text-sm text-gray-800">@{{ authStore.username }}</strong>
+                <span class="block text-xs text-gray-500">Admin Sektor {{ mySector }}</span>
               </div>
               <i class="fa-solid fa-chevron-down profile-arrow text-gray-400 text-xs transition-transform duration-300" :class="{'rotate-180': isProfileMenuOpen}"></i>
             </div>
 
             <!-- Dropdown Profil -->
             <transition name="fade-slide">
-              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
                 <router-link to="/profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                   <i class="fas fa-user-circle mr-2 w-4 text-center"></i> Profil Saya
                 </router-link>
@@ -127,16 +78,15 @@
               </div>
             </transition>
           </div>
-
         </div>
       </header>
 
-      <!-- CONTENT -->
-      <section class="content z-10 p-4 md:p-6">
-        <div class="dashboard-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- CONTENT: FORM PENGATURAN MILIK ANDA -->
+      <section class="content z-10 print:hidden">
+        <div class="dashboard-grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- KARTU FOTO PROFIL -->
-          <div class="dashboard-card col-span-1 p-6 rounded-2xl border-2 border-blue-50 bg-white shadow-sm flex flex-col items-center text-center">
+          <div class="dashboard-card col-span-1 p-6 border-2 border-blue-50 bg-white flex flex-col items-center text-center rounded-2xl shadow-sm">
             <div class="relative mb-4 group cursor-pointer">
               <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
                 <i v-if="!profileImage" class="fa-solid fa-user text-5xl text-blue-300"></i>
@@ -146,8 +96,9 @@
                 <i class="fas fa-camera text-white text-xl"></i>
               </div>
             </div>
-            <h3 class="font-bold text-xl text-gray-800">{{ profileData.nama }}</h3>
-            <p class="text-sm text-blue-600 font-medium mb-1">Administrator Sistem</p>
+            
+            <h3 class="font-bold text-xl text-gray-800">@{{ authStore.username }}</h3>
+            <p class="text-sm text-blue-600 font-medium mb-1">Admin Sektor {{ mySector }}</p>
             <p class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full mt-2">
               <i class="fas fa-id-badge mr-1"></i> NIP: {{ profileData.nip }}
             </p>
@@ -167,7 +118,7 @@
           </div>
 
           <!-- FORM EDIT PROFIL -->
-          <div class="dashboard-card col-span-1 lg:col-span-2 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div class="dashboard-card col-span-1 lg:col-span-2 p-6 border border-gray-100 bg-white rounded-2xl shadow-sm">
             <div class="border-b border-gray-100 pb-4 mb-6">
               <h3 class="font-bold text-lg text-gray-800">Pengaturan Akun</h3>
               <p class="text-sm text-gray-500">Perbarui informasi dasar dan kredensial Anda.</p>
@@ -217,8 +168,10 @@
         </div>
       </section>
 
-      <footer class="main-footer flex flex-wrap items-center justify-center gap-2 p-4 text-sm text-gray-500 mt-auto border-t bg-white relative z-10">
+      <footer class="main-footer flex flex-wrap items-center justify-center gap-2 p-4 text-sm text-gray-500 mt-auto border-t bg-white relative z-10 print:hidden">
         <span>© 2026 Balai Wilayah Sungai Sumatera III Pekanbaru</span>
+        <span class="hidden sm:inline px-1">|</span>
+        <span>Kementerian Pekerjaan Umum</span>
       </footer>
     </main>
   </div>
@@ -228,54 +181,49 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useActivityStore } from '@/stores/activities'
 import '@/assets/admin.css' 
 
 const router = useRouter()
 const authStore = useAuthStore()
-const activityStore = useActivityStore()
 
-// State Sidebar (DITAMBAHKAN AGAR HAMBURGER BERFUNGSI)
+// --- LOGIKA LAYOUT ---
 const isSidebarOpen = ref(false)
-
-// --- LOGIKA TOPBAR (NOTIFIKASI & PROFIL) ---
-const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
 
-// State Notifikasi Kosong
-const notifications = ref([])
-
-const unreadNotifications = computed(() => notifications.value.filter(n => !n.read).length)
-
-const toggleNotification = () => {
-  isNotificationOpen.value = !isNotificationOpen.value
-  isProfileMenuOpen.value = false
+// Pemetaan Sektor sesuai dengan AdminDashboard
+const adminSectorMap = {
+  'admin1': 'Siak',
+  'admin2': 'Kampar',
+  'admin3': 'Rokan',
+  'admin4': 'Indragiri'
 }
+const mySector = computed(() => {
+  return adminSectorMap[authStore.username] || 'Pusat'
+})
+
 const toggleProfile = () => {
   isProfileMenuOpen.value = !isProfileMenuOpen.value
-  isNotificationOpen.value = false
-}
-const markAllAsRead = () => {
-  notifications.value.forEach(n => n.read = true)
 }
 
 const closeDropdownsOnClickOutside = (e) => {
-  if (!e.target.closest('#notification-menu')) isNotificationOpen.value = false
   if (!e.target.closest('#profile-menu')) isProfileMenuOpen.value = false
 }
 
-// --- LOGIKA PROFIL ---
+// --- LOGIKA PROFIL MILIK ANDA ---
 const isSaving = ref(false)
 const profileImage = ref('')
 
 const profileData = reactive({
-  nama: 'Admin',
+  nama: 'Administrator Data',
   nip: '19850101 201012 1 001',
   email: 'admin@bws-sumatera3.go.id',
   unitKerja: 'BWS Sumatera III Pekanbaru'
 })
 
 onMounted(() => {
+  if (!authStore.isAuthenticated || authStore.role !== 'admin') {
+    router.push('/')
+  }
   document.addEventListener('click', closeDropdownsOnClickOutside)
 })
 
@@ -289,15 +237,6 @@ const saveProfile = () => {
     isSaving.value = false
     alert('Profil berhasil diperbarui!')
   }, 800)
-}
-
-const prepareReport = async () => {
-  await activityStore.prepareReport()
-  alert('Laporan berhasil disiapkan! Superuser sekarang dapat mengunduhnya.')
-}
-
-const printLaporan = () => {
-  window.print();
 }
 
 const handleLogout = () => {
