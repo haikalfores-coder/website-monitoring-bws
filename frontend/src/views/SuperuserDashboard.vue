@@ -220,6 +220,8 @@
                     <td class="p-4 text-sm font-semibold text-gray-800">
                       {{ keg.nama_kegiatan }}
                       <span class="block text-xs font-normal text-gray-500 mt-1"><i class="fas fa-map-marker-alt text-blue-400 mr-1"></i>{{ parseLokasi(keg.item_kegiatan).lokasi }}</span>
+                      
+                      <!-- PERBAIKAN: Tombol Lihat Lampiran -->
                       <div v-if="keg.foto_url" @click="openPhotoModal(keg)" class="text-xs font-normal text-blue-600 hover:text-blue-800 cursor-pointer mt-1 max-w-[150px] flex items-center">
                         <i class="fas fa-image mr-1"></i> Lihat Lampiran
                       </div>
@@ -421,6 +423,16 @@ const router = useRouter()
 const authStore = useAuthStore()
 const activityStore = useActivityStore()
 
+// --- PERBAIKAN URL GAMBAR UNTUK SUPERUSER ---
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const getFullImageUrl = (path) => {
+  if (!path) return 'https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto'
+  if (path.startsWith('http') || path.startsWith('data:')) return path
+  return `${BACKEND_URL}${path}`
+}
+// --------------------------------------------
+
 const isSidebarOpen = ref(false)
 const activeMenu = ref('dashboard') 
 const searchQuery = ref('') 
@@ -545,7 +557,11 @@ const toggleSelectAllSelesai = () => {
 
 const activitiesToPrint = computed(() => activityStore.activities.filter(keg => selectedToPrint.value.includes(keg.id)))
 
-const openPhotoModal = (keg) => { currentPhoto.value = keg.preview_url || `https://placehold.co/600x400/eeeeee/888888?text=File:+${keg.foto_url}`; isPhotoModalOpen.value = true }
+// PERBAIKAN: Menampilkan gambar menggunakan helper URL
+const openPhotoModal = (keg) => { 
+  currentPhoto.value = getFullImageUrl(keg.foto_url)
+  isPhotoModalOpen.value = true 
+}
 
 const printLaporan = () => { 
   if(selectedToPrint.value.length === 0) {
