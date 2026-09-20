@@ -362,7 +362,6 @@
 
       <!-- ================= TEMPLATE CETAK LAPORAN PDF ================= -->
       <div class="hidden print:block w-full bg-white text-black p-4">
-        <!-- Struktur Print Laporan tetap sama... -->
         <div class="flex items-center border-b-4 border-black pb-4 mb-6">
           <img src="/logo-pu.png" alt="Logo PU" class="w-24 h-24 mr-6 object-contain">
           <div class="text-center w-full pr-12">
@@ -372,8 +371,11 @@
             <p class="text-sm mt-2">Jl. Pepaya No.34-C, Jadirejo, Kec. Sukajadi, Kota Pekanbaru, Riau 28126</p>
           </div>
         </div>
-        <!-- Sisanya dari print ... -->
-        <div class="text-center mb-8"><h2 class="text-xl font-bold underline">LAPORAN PELAKSANAAN KEGIATAN (SELESAI)</h2></div>
+
+        <div class="text-center mb-8">
+          <h2 class="text-xl font-bold underline">LAPORAN PELAKSANAAN KEGIATAN (SELESAI)</h2>
+        </div>
+
         <table class="w-full border-collapse border border-black text-sm text-left mb-12">
           <thead>
             <tr class="bg-gray-100">
@@ -399,17 +401,20 @@
             </tr>
           </tbody>
         </table>
+
         <div class="flex justify-between px-10 pt-4">
           <div class="text-center">
             <p>Mengetahui,</p>
             <p class="font-bold mb-20">Kepala BWS Sumatera III</p>
-            <p class="underline font-bold">(..........................................)</p><p>NIP. </p>
+            <p class="underline font-bold">(..........................................)</p>
+            <p>NIP. </p>
           </div>
           <div class="text-center">
             <p>Pekanbaru, ...............................</p>
             <p>Dibuat Oleh,</p>
             <p class="font-bold mb-20 mt-2">Admin / Petugas</p>
-            <p class="font-bold text-lg inline-block">(..........................................)</p><p>NIP. </p>
+            <p class="font-bold text-lg inline-block">(..........................................)</p>
+            <p>NIP. </p>
           </div>
         </div>
       </div>
@@ -467,7 +472,7 @@
               </div>
               <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
                 <img :src="editImagePreview" class="max-h-48 object-contain rounded shadow-sm">
-                <!-- Tombol ini sekarang berfungsi untuk Menghapus secara permanen (menjadi Kosong) ATAU agar pengguna bisa mengganti foto yang lain -->
+                <!-- Tombol ini berfungsi untuk Menghapus secara permanen (menjadi Kosong) ATAU agar pengguna bisa mengganti foto yang lain -->
                 <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Hapus Gambar"><i class="fas fa-trash-alt text-xs"></i></button>
               </div>
             </div>
@@ -519,12 +524,7 @@ const myActivities = computed(() => {
 const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
 const notifications = ref([])
-const unreadNotifications = computed(() => notifications.value.filter(n => !n.read).length)
 
-const toggleNotification = () => {
-  isNotificationOpen.value = !isNotificationOpen.value; isProfileMenuOpen.value = false 
-  if (isNotificationOpen.value) notifications.value.forEach(n => n.read = true)
-}
 const toggleProfile = () => { isProfileMenuOpen.value = !isProfileMenuOpen.value; isNotificationOpen.value = false }
 const closeDropdownsOnClickOutside = (e) => {
   if (!e.target.closest('#notification-menu')) isNotificationOpen.value = false
@@ -532,16 +532,21 @@ const closeDropdownsOnClickOutside = (e) => {
 }
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-const showForm = ref(false); const selectedFile = ref(null); const imagePreview = ref(''); const fileInput = ref(null) 
+const showForm = ref(false); 
+const selectedFile = ref(null); 
+const imagePreview = ref(''); 
+const fileInput = ref(null); 
 const formData = reactive({ nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
-const isPhotoModalOpen = ref(false); const currentPhoto = ref('')
+const isPhotoModalOpen = ref(false); 
+const currentPhoto = ref('')
 
 const isEditModalOpen = ref(false)
 const isSubmittingEdit = ref(false)
 const editSelectedFile = ref(null)
 const editImagePreview = ref('')
 const editFileInput = ref(null)
-// State baru untuk melacak apakah user sengaja menekan tombol hapus foto di modal edit
+
+// State untuk melacak apakah user sengaja menekan tombol hapus foto di modal edit
 const isEditPhotoRemoved = ref(false)
 
 const editFormData = reactive({ id: null, nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', foto_url: '', preview_url: '', tanggal_mulai: '', tanggal_selesai: '' })
@@ -638,7 +643,7 @@ const handleEditFileUpload = (e) => {
   const file = e.target.files[0];
   if (file) {
     editSelectedFile.value = file;
-    isEditPhotoRemoved.value = false; // Reset state karena memilih gambar baru
+    isEditPhotoRemoved.value = false; 
     const reader = new FileReader();
     reader.onload = (event) => {
       editImagePreview.value = event.target.result;
@@ -647,15 +652,16 @@ const handleEditFileUpload = (e) => {
   }
 }
 
-// Berfungsi untuk mengosongkan gambar (menghapus) baik preview lama maupun file baru yg sedang disiapkan
 const removeEditImage = () => {
   editSelectedFile.value = null;
   editImagePreview.value = '';
-  isEditPhotoRemoved.value = true; // Tandai bahwa user sengaja ingin menghapus foto
+  isEditPhotoRemoved.value = true; 
   if (editFileInput.value) editFileInput.value.value = '';
 }
 
-// --- SUBMIT ACTIVITY (TAMBAH DATA) ---
+// ==============================================
+// SUBMIT ACTIVITY (TAMBAH DATA) - FIX ERROR 422
+// ==============================================
 const submitActivity = async () => {
   isSubmitting.value = true;
   const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`;
@@ -663,12 +669,18 @@ const submitActivity = async () => {
   const formDataApi = new FormData();
   formDataApi.append('nama_kegiatan', formData.nama_kegiatan);
   formDataApi.append('item_kegiatan', lokasiDenganTag);
-  formDataApi.append('progress', formData.progress);
+  // Casting progress menjadi Number agar tidak ditolak validasi
+  formDataApi.append('progress', Number(formData.progress)); 
   formDataApi.append('status', formData.status);
-  formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
-  formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
   
-  // (Hanya di-append jika foto diunggah / Opsional)
+  // HANYA APPEND JIKA ADA ISINYA (Menghindari error 422 karena empty string date)
+  if (formData.tanggal_mulai) {
+    formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
+  }
+  if (formData.tanggal_selesai) {
+    formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
+  }
+  
   if (selectedFile.value) {
     formDataApi.append('foto', selectedFile.value); 
   }
@@ -676,12 +688,13 @@ const submitActivity = async () => {
   try {
     await activityStore.addActivity(formDataApi);
     
+    // Reset Form
     Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' });
     removeImage(); 
     showForm.value = false;
   } catch (error) {
     console.error("Gagal saat submit data:", error);
-    alert('Terjadi kesalahan saat menyimpan data ke server!');
+    alert('Terjadi kesalahan validasi! Cek console/network untuk detail.');
   } finally {
     isSubmitting.value = false;
   }
@@ -697,10 +710,9 @@ const openEditModal = (keg) => {
   editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
   editFormData.status = getDisplayStatus(keg); 
   
-  // Tampilkan gambar lama pada preview edit jika ada
   editImagePreview.value = keg.foto_url || '';
   editSelectedFile.value = null;
-  isEditPhotoRemoved.value = false; // Reset tanda hapus
+  isEditPhotoRemoved.value = false; 
 
   isEditModalOpen.value = true 
 }
@@ -713,7 +725,9 @@ const closeEditModal = () => {
   if (editFileInput.value) editFileInput.value.value = '';
 }
 
-// --- SUBMIT EDIT ACTIVITY ---
+// ==============================================
+// SUBMIT EDIT ACTIVITY - FIX ERROR 422
+// ==============================================
 const submitEdit = async () => { 
   isSubmittingEdit.value = true;
   try {
@@ -722,37 +736,52 @@ const submitEdit = async () => {
     // Gunakan FormData jika user mengunggah foto baru ATAU jika user sengaja MENGHAPUS foto
     if (editSelectedFile.value || isEditPhotoRemoved.value) {
       const formDataApi = new FormData();
+      
+      // CATATAN: Jika backend menggunakan Laravel resource route PUT, FormData seringkali
+      // mengharuskan spoofing method POST dengan _method='PUT'.
+      // Buka komentar (hilangkan //) pada baris di bawah INI JIKA masih gagal update data dengan gambar:
+      // formDataApi.append('_method', 'PUT'); 
+
       formDataApi.append('id', editFormData.id);
       formDataApi.append('nama_kegiatan', editFormData.nama_kegiatan);
       formDataApi.append('item_kegiatan', lokasiDenganTag);
-      formDataApi.append('progress', editFormData.progress);
+      formDataApi.append('progress', Number(editFormData.progress));
       formDataApi.append('status', editFormData.status);
-      formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai || '');
-      formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai || '');
       
-      // Jika ada file foto baru
+      if (editFormData.tanggal_mulai) {
+        formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai);
+      }
+      if (editFormData.tanggal_selesai) {
+        formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai);
+      }
+      
       if (editSelectedFile.value) {
         formDataApi.append('foto', editSelectedFile.value);
       } 
-      // Sinyal bahwa gambar dihapus & dikosongkan secara permanen
       if (isEditPhotoRemoved.value) {
         formDataApi.append('delete_foto', 'true');
-        formDataApi.append('remove_foto', 'true'); // Ditambahkan sebagai opsional format backend
+        formDataApi.append('remove_foto', 'true'); 
       }
 
       await activityStore.updateActivity(formDataApi);
     } 
-    // Jika tidak ada perubahan sama sekali pada foto (pakai JSON seperti biasa)
+    // Jika tidak ada perubahan sama sekali pada foto (pakai JSON)
     else {
       const updatedData = { ...editFormData };
       updatedData.item_kegiatan = lokasiDenganTag;
+      updatedData.progress = Number(updatedData.progress);
+      
+      // Hapus properti tanggal jika kosong agar tidak men-trigger error date format
+      if (!updatedData.tanggal_mulai) delete updatedData.tanggal_mulai;
+      if (!updatedData.tanggal_selesai) delete updatedData.tanggal_selesai;
+
       await activityStore.updateActivity(updatedData);
     }
 
     closeEditModal();
   } catch (error) {
     console.error("Gagal saat mengupdate data:", error);
-    alert('Terjadi kesalahan saat mengupdate data!');
+    alert('Terjadi kesalahan validasi! Cek console/network untuk detail.');
   } finally {
     isSubmittingEdit.value = false;
   }
