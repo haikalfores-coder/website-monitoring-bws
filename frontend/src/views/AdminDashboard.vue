@@ -1,5 +1,9 @@
 <template>
   <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
+    
+    <!-- OVERLAY UNTUK MOBILE -->
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
+
     <!-- SIDEBAR -->
     <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <div class="sidebar-brand">
@@ -12,13 +16,13 @@
 
       <nav class="sidebar-menu">
         <div class="menu-title">MENU UTAMA</div>
-        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop()" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
+        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
           <i class="fa-solid fa-house"></i>
           <span>Dashboard</span>
         </a>
 
         <div class="menu-title">DATA & LAPORAN</div>
-        <a href="#tabel-data" @click="activeMenu = 'data'" class="menu-item" :class="{ 'active': activeMenu === 'data' }">
+        <a href="#tabel-data" @click="activeMenu = 'data'; isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'data' }">
           <i class="fa-solid fa-clipboard-list"></i>
           <span>Data Kegiatan</span>
         </a>
@@ -30,9 +34,9 @@
         </a>
 
         <div class="menu-title">SISTEM</div>
-        <router-link to="/profil" class="menu-item">
+        <router-link to="/profil" class="menu-item" @click="isSidebarOpen = false">
           <i class="fa-solid fa-user"></i>
-          <span>Profil</span>
+          <span>Profil Saya</span>
         </router-link>
       </nav>
 
@@ -46,14 +50,17 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
+      
+      <!-- TOPBAR -->
       <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
         <div class="topbar-left">
+          <!-- Tombol Hamburger Toggle -->
           <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="page-title">
-            <h1>Dashboard Administrator</h1>
-            <p>Area Kerja Pribadi: @{{ authStore.username }}</p>
+          <div class="page-title hidden sm:block">
+            <h1 class="text-xl font-bold text-gray-800">Dashboard Administrator</h1>
+            <p class="text-xs text-gray-500">Area Kerja Pribadi: {{ authStore.username }}</p>
           </div>
         </div>
 
@@ -65,14 +72,14 @@
                 <i class="fa-solid fa-user"></i>
               </div>
               <div class="admin-info hidden sm:block">
-                <strong class="block text-sm text-gray-800">@{{ authStore.username }}</strong>
+                <strong class="block text-sm text-gray-800">{{ authStore.username }}</strong>
                 <span class="block text-xs text-gray-500">Administrator</span>
               </div>
               <i class="fa-solid fa-chevron-down profile-arrow text-gray-400 text-xs transition-transform duration-300" :class="{'rotate-180': isProfileMenuOpen}"></i>
             </div>
 
             <transition name="fade-slide">
-              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                 <router-link to="/profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                   <i class="fas fa-user-circle mr-2 w-4 text-center"></i> Profil Saya
                 </router-link>
@@ -173,7 +180,6 @@
               </div>
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Lokasi Detail (Bebas)</label>
-                <!-- KINI BEBAS DIISI OLEH ADMIN -->
                 <input v-model="formData.item_kegiatan" type="text" placeholder="Contoh: Jl. Sudirman atau Sungai Kampar Kanan" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
               </div>
               
@@ -209,7 +215,7 @@
             </div>
 
             <div class="flex flex-col md:col-span-1">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto</label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
               <div v-if="!imagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -226,7 +232,11 @@
             </div>
 
             <div class="md:col-span-2 flex justify-end mt-2 pt-4 border-t border-gray-100">
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition"><i class="fas fa-save mr-2"></i>Simpan Kegiatan</button>
+              <button type="submit" :disabled="isSubmitting" class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition">
+                <i v-if="!isSubmitting" class="fas fa-save mr-2"></i>
+                <i v-else class="fas fa-spinner fa-spin mr-2"></i>
+                {{ isSubmitting ? 'Menyimpan...' : 'Simpan Kegiatan' }}
+              </button>
             </div>
           </form>
         </div>
@@ -272,7 +282,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr class="border-b bg-gray-50">
                   <th v-if="activeTab === 'selesai'" class="p-4 w-12 text-center">
@@ -297,7 +307,6 @@
 
                   <td class="p-4 text-sm font-semibold text-gray-800">
                     {{ keg.nama_kegiatan }}
-                    <!-- Menggunakan extractLokasi agar Tag Username disembunyikan -->
                     <span class="block text-xs font-normal text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>{{ extractLokasi(keg.item_kegiatan) }}</span>
                     <div v-if="keg.foto_url" @click="openPhotoModal(keg)" class="text-xs font-normal text-blue-600 hover:text-blue-800 cursor-pointer mt-1 max-w-[150px] flex items-center">
                       <i class="fas fa-image mr-1"></i> Lihat Lampiran
@@ -382,7 +391,6 @@
               <td class="border border-black p-2 text-center">{{ index + 1 }}</td>
               <td class="border border-black p-2">
                 <strong class="block">{{ keg.nama_kegiatan }}</strong>
-                <!-- Gunakan extractLokasi agar Tag tidak ikut tercetak -->
                 <span class="text-xs text-gray-700">{{ extractLokasi(keg.item_kegiatan) }}</span>
               </td>
               <td class="border border-black p-2 text-center text-xs">
@@ -432,7 +440,6 @@
             <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kegiatan</label><input v-model="editFormData.nama_kegiatan" type="text" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required></div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Lokasi Detail</label>
-              <!-- Bebas diedit -->
               <input v-model="editFormData.item_kegiatan" type="text" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
             </div>
             <div><label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Mulai</label><input v-model="editFormData.tanggal_mulai" type="date" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"></div>
@@ -450,10 +457,32 @@
                 <span class="font-bold text-blue-700 w-12 text-right">{{ editFormData.progress }}%</span>
               </div>
             </div>
+
+            <!-- Upload Foto di Modal Edit -->
+            <div class="md:col-span-2 flex flex-col mt-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional - Biarkan jika tidak diganti)</span></label>
+              <div v-if="!editImagePreview" class="flex-1 flex items-center justify-center w-full">
+                <label for="edit-dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto baru</span></p>
+                  </div>
+                  <input id="edit-dropzone-file" ref="editFileInput" type="file" accept="image/*" class="hidden" @change="handleEditFileUpload" />
+                </label>
+              </div>
+              <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
+                <img :src="editImagePreview" class="max-h-48 object-contain rounded shadow-sm">
+                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Ganti Foto"><i class="fas fa-trash-alt text-xs"></i></button>
+              </div>
+            </div>
+            
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
             <button type="button" @click="closeEditModal" class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition">Batal</button>
-            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition">Simpan Perubahan</button>
+            <button type="submit" :disabled="isSubmittingEdit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-bold shadow-md transition">
+              <i v-if="isSubmittingEdit" class="fas fa-spinner fa-spin mr-2"></i>
+              {{ isSubmittingEdit ? 'Menyimpan...' : 'Simpan Perubahan' }}
+            </button>
           </div>
         </form>
       </div>
@@ -476,23 +505,20 @@ const isSidebarOpen = ref(false)
 const activeMenu = ref('dashboard') 
 const searchQuery = ref('') 
 const activeTab = ref('aktif') 
+const isSubmitting = ref(false)
 
-// ================= LOGIKA DATA OWNERSHIP (ISOLASI DATA) =================
-// Menghilangkan Tag Rahasia di frontend agar tabel terlihat rapi
 const extractLokasi = (text) => {
   if (!text) return ''
-  const match = text.match(/^\[(.*?)\]\s(.*)/) // Mencari pola "[username] Lokasi Asli"
+  const match = text.match(/^\[(.*?)\]\s(.*)/) 
   if (match) return match[2]
   return text
 }
 
-// Menyaring SEMUA data kegiatan dari Database agar HANYA data buatan Admin ini yang muncul
 const myActivities = computed(() => {
   return activityStore.activities.filter(keg => 
     keg.item_kegiatan?.startsWith(`[${authStore.username}]`)
   )
 })
-// =========================================================================
 
 const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
@@ -513,7 +539,13 @@ const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 const showForm = ref(false); const selectedFile = ref(null); const imagePreview = ref(''); const fileInput = ref(null) 
 const formData = reactive({ nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
 const isPhotoModalOpen = ref(false); const currentPhoto = ref('')
+
 const isEditModalOpen = ref(false)
+const isSubmittingEdit = ref(false)
+const editSelectedFile = ref(null)
+const editImagePreview = ref('')
+const editFileInput = ref(null)
+
 const editFormData = reactive({ id: null, nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', foto_url: '', preview_url: '', tanggal_mulai: '', tanggal_selesai: '' })
 
 const selectedToPrint = ref([])
@@ -526,7 +558,7 @@ onMounted(() => {
 onUnmounted(() => document.removeEventListener('click', closeDropdownsOnClickOutside))
 
 const openForm = () => {
-  formData.item_kegiatan = '' // Dikosongkan agar admin bebas mengetik
+  formData.item_kegiatan = '' 
   showForm.value = true
 }
 
@@ -544,7 +576,6 @@ const syncStatusWithProgress = (dataObj) => {
   else if (dataObj.progress > 0 && dataObj.status === 'Menunggu') dataObj.status = 'Berjalan'
 }
 
-// LOGIKA STATISTIK (MENGGUNAKAN 'myActivities' agar yang dihitung hanya miliknya)
 const totalKegiatan = computed(() => myActivities.value.length)
 const countSelesai = computed(() => myActivities.value.filter(keg => getDisplayStatus(keg) === 'Selesai').length)
 const countBerjalan = computed(() => myActivities.value.filter(keg => getDisplayStatus(keg) === 'Berjalan').length)
@@ -563,7 +594,6 @@ const activeActivitiesProgress = computed(() => {
   return myActivities.value.filter(k => getDisplayStatus(k) !== 'Selesai' && k.progress > 0).sort((a, b) => b.progress - a.progress)
 })
 
-// LOGIKA TABEL (Tab Aktif vs Selesai)
 const displayedActivities = computed(() => {
   let baseData = activeTab.value === 'aktif' 
     ? myActivities.value.filter(keg => getDisplayStatus(keg) !== 'Selesai')
@@ -590,41 +620,128 @@ const toggleSelectAllSelesai = () => {
 
 const activitiesToPrint = computed(() => myActivities.value.filter(keg => selectedToPrint.value.includes(keg.id)))
 
+// --- FITUR PREVIEW GAMBAR (FORM TAMBAH) ---
 const handleFileUpload = (e) => {
-  const file = e.target.files[0]; if (file) { selectedFile.value = file; imagePreview.value = URL.createObjectURL(file) }
+  const file = e.target.files[0]; 
+  if (file) { 
+    selectedFile.value = file; 
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      imagePreview.value = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 }
+
 const removeImage = () => { selectedFile.value = null; imagePreview.value = ''; if (fileInput.value) fileInput.value.value = '' }
 
-const submitActivity = async () => {
-  if (!selectedFile.value) { alert('Harap unggah foto!'); return }
-  
-  // Sembunyikan Username di dalam data Lokasi
-  const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`
-  
-  const finalData = { ...formData, item_kegiatan: lokasiDenganTag, foto_url: selectedFile.value.name, preview_url: imagePreview.value }
-  await activityStore.addActivity(finalData)
-  
-  Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
-  removeImage(); showForm.value = false
+// --- FITUR PREVIEW GAMBAR (FORM EDIT) ---
+const handleEditFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    editSelectedFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      editImagePreview.value = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
-const openPhotoModal = (keg) => { currentPhoto.value = keg.preview_url || `https://placehold.co/600x400/eeeeee/888888?text=File:+${keg.foto_url}`; isPhotoModalOpen.value = true }
+const removeEditImage = () => {
+  editSelectedFile.value = null;
+  editImagePreview.value = '';
+  if (editFileInput.value) editFileInput.value.value = '';
+}
+
+// --- SUBMIT ACTIVITY (TAMBAH DATA) ---
+const submitActivity = async () => {
+  isSubmitting.value = true;
+  const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`;
+  
+  const formDataApi = new FormData();
+  formDataApi.append('nama_kegiatan', formData.nama_kegiatan);
+  formDataApi.append('item_kegiatan', lokasiDenganTag);
+  formDataApi.append('progress', formData.progress);
+  formDataApi.append('status', formData.status);
+  formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
+  formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
+  
+  // (Hanya di-append jika foto diunggah / Opsional)
+  if (selectedFile.value) {
+    formDataApi.append('foto', selectedFile.value); 
+  }
+
+  try {
+    await activityStore.addActivity(formDataApi);
+    
+    Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' });
+    removeImage(); 
+    showForm.value = false;
+  } catch (error) {
+    console.error("Gagal saat submit data:", error);
+    alert('Terjadi kesalahan saat menyimpan data ke server!');
+  } finally {
+    isSubmitting.value = false;
+  }
+}
+
+const openPhotoModal = (keg) => { 
+  currentPhoto.value = keg.foto_url || `https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto`; 
+  isPhotoModalOpen.value = true 
+}
 
 const openEditModal = (keg) => { 
   Object.assign(editFormData, keg); 
-  editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan) // Buang tag-nya saat form edit terbuka
+  editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
   editFormData.status = getDisplayStatus(keg); 
+  
+  // Tampilkan gambar lama pada preview edit jika ada
+  editImagePreview.value = keg.foto_url || '';
+  editSelectedFile.value = null;
+
   isEditModalOpen.value = true 
 }
 
-const closeEditModal = () => isEditModalOpen.value = false
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  removeEditImage();
+}
+
+// --- SUBMIT EDIT ACTIVITY ---
 const submitEdit = async () => { 
-  const updatedData = { ...editFormData }
-  // Tempelkan lagi Tag-nya sebelum dikirim ke Database
-  updatedData.item_kegiatan = `[${authStore.username}] ${editFormData.item_kegiatan}`
-  
-  await activityStore.updateActivity(updatedData); 
-  closeEditModal() 
+  isSubmittingEdit.value = true;
+  try {
+    const lokasiDenganTag = `[${authStore.username}] ${editFormData.item_kegiatan}`;
+
+    // Jika ada file FOTO BARU, gunakan FormData
+    if (editSelectedFile.value) {
+      const formDataApi = new FormData();
+      formDataApi.append('id', editFormData.id);
+      formDataApi.append('nama_kegiatan', editFormData.nama_kegiatan);
+      formDataApi.append('item_kegiatan', lokasiDenganTag);
+      formDataApi.append('progress', editFormData.progress);
+      formDataApi.append('status', editFormData.status);
+      formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai || '');
+      formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai || '');
+      formDataApi.append('foto', editSelectedFile.value);
+
+      await activityStore.updateActivity(formDataApi);
+    } 
+    // Jika TIDAK ADA foto baru, kirim object biasa agar kompatibel (tidak memutus foto lama)
+    else {
+      const updatedData = { ...editFormData };
+      updatedData.item_kegiatan = lokasiDenganTag;
+      await activityStore.updateActivity(updatedData);
+    }
+
+    closeEditModal();
+  } catch (error) {
+    console.error("Gagal saat mengupdate data:", error);
+    alert('Terjadi kesalahan saat mengupdate data!');
+  } finally {
+    isSubmittingEdit.value = false;
+  }
 }
 
 const handleDelete = async (id) => { 
@@ -642,10 +759,6 @@ const printLaporan = () => {
   window.print() 
 }
 
-const formattedDate = computed(() => {
-  const t = new Date(); const m = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-  return `${t.getDate()} ${m[t.getMonth()]} ${t.getFullYear()}`
-})
 const handleLogout = () => { authStore.logout(); router.push('/') }
 </script>
 
