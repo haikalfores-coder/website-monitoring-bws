@@ -1,11 +1,10 @@
 <template>
   <div class="admin-wrapper relative bg-gray-50/50 min-h-screen flex overflow-hidden">
     
-    <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
+    <!-- OVERLAY UNTUK MOBILE -->
     <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- SIDEBAR -->
-    <!-- Ditambahkan class Tailwind fixed, z-50, transition-transform agar buka-tutup lancar di mobile -->
     <aside class="sidebar print:hidden fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 lg:relative lg:translate-x-0" :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
       <div class="sidebar-brand">
         <img src="/logo-pu.png" alt="Logo PU" class="sidebar-logo">
@@ -231,7 +230,11 @@
             </div>
 
             <div class="md:col-span-2 flex justify-end mt-2 pt-4 border-t border-gray-100">
-              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition"><i class="fas fa-save mr-2"></i>Simpan Kegiatan</button>
+              <button type="submit" :disabled="isSubmitting" class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition">
+                <i v-if="!isSubmitting" class="fas fa-save mr-2"></i>
+                <i v-else class="fas fa-spinner fa-spin mr-2"></i>
+                {{ isSubmitting ? 'Menyimpan...' : 'Simpan Kegiatan' }}
+              </button>
             </div>
           </form>
         </div>
@@ -386,7 +389,6 @@
               <td class="border border-black p-2 text-center">{{ index + 1 }}</td>
               <td class="border border-black p-2">
                 <strong class="block">{{ keg.nama_kegiatan }}</strong>
-                <!-- Gunakan extractLokasi agar Tag tidak ikut tercetak -->
                 <span class="text-xs text-gray-700">{{ extractLokasi(keg.item_kegiatan) }}</span>
               </td>
               <td class="border border-black p-2 text-center text-xs">
@@ -420,6 +422,7 @@
     <div v-if="isPhotoModalOpen" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[999] p-4 backdrop-blur-sm print:hidden">
       <div class="relative bg-white p-2 rounded-xl max-w-3xl w-full flex flex-col items-center">
         <button @click="isPhotoModalOpen = false" class="absolute -top-12 right-0 text-white text-4xl hover:text-gray-300">&times;</button>
+        <!-- Asumsi API mengembalikan url foto lengkap -->
         <img :src="currentPhoto" alt="Dokumentasi" class="max-h-[80vh] w-full object-contain rounded-lg">
       </div>
     </div>
@@ -479,6 +482,7 @@ const isSidebarOpen = ref(false)
 const activeMenu = ref('dashboard') 
 const searchQuery = ref('') 
 const activeTab = ref('aktif') 
+const isSubmitting = ref(false) // Ditambahkan untuk efek loading submit
 
 const extractLokasi = (text) => {
   if (!text) return ''
@@ -587,13 +591,13 @@ const toggleSelectAllSelesai = () => {
 
 const activitiesToPrint = computed(() => myActivities.value.filter(keg => selectedToPrint.value.includes(keg.id)))
 
-// PERBAIKAN 2: Menggunakan FileReader agar format gambar menjadi Base64 dan tersimpan permanen
+// --- FITUR PREVIEW GAMBAR (HANYA UNTUK TAMPILAN) ---
 const handleFileUpload = (e) => {
   const file = e.target.files[0]; 
   if (file) { 
     selectedFile.value = file; 
     
-    // Ubah gambar menjadi Base64 String agar tidak hilang saat refresh halaman
+    // Preview Base64 (Hanya untuk UI saja, tidak dikirim ke DB)
     const reader = new FileReader();
     reader.onload = (event) => {
       imagePreview.value = event.target.result;
@@ -604,19 +608,52 @@ const handleFileUpload = (e) => {
 
 const removeImage = () => { selectedFile.value = null; imagePreview.value = ''; if (fileInput.value) fileInput.value.value = '' }
 
+// --- MODIFIKASI SUBMIT ACTIVITY (MENGGUNAKAN FORMDATA UNTUK API) ---
 const submitActivity = async () => {
-  if (!selectedFile.value) { alert('Harap unggah foto!'); return }
+  if (!selectedFile.value) { 
+    alert('Harap unggah foto!'); 
+    return; 
+  }
   
-  const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`
+  isSubmitting.value = true;
+  const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`;
   
-  const finalData = { ...formData, item_kegiatan: lokasiDenganTag, foto_url: selectedFile.value.name, preview_url: imagePreview.value }
-  await activityStore.addActivity(finalData)
+  // 1. Inisialisasi FormData untuk HTTP Request multipart/form-data
+  const formDataApi = new FormData();
+  formDataApi.append('nama_kegiatan', formData.nama_kegiatan);
+  formDataApi.append('item_kegiatan', lokasiDenganTag);
+  formDataApi.append('progress', formData.progress);
+  formDataApi.append('status', formData.status);
+  formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
+  formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
   
-  Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
-  removeImage(); showForm.value = false
+  // 2. Masukkan object File fisik, BUKAN string base64
+  formDataApi.append('foto', selectedFile.value); 
+
+  try {
+    // 3. Kirim FormData ke Pinia Store / API Backend
+    await activityStore.addActivity(formDataApi);
+    
+    // 4. Bersihkan Form setelah sukses
+    Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' });
+    removeImage(); 
+    showForm.value = false;
+    // Opsi: Panggil fungsi ini jika API Anda tidak mereturn data terbaru langsung
+    // await activityStore.fetchActivities();
+  } catch (error) {
+    console.error("Gagal saat submit data:", error);
+    alert('Terjadi kesalahan saat menyimpan data ke server!');
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 
-const openPhotoModal = (keg) => { currentPhoto.value = keg.preview_url || `https://placehold.co/600x400/eeeeee/888888?text=File:+${keg.foto_url}`; isPhotoModalOpen.value = true }
+// Catatan: Pastikan endpoint API Anda mereturn/menyimpan URL gambar, misalnya: `keg.foto_url` = 'https://api.anda.com/uploads/foto123.jpg'
+const openPhotoModal = (keg) => { 
+  // Gunakan foto_url yang direturn dari backend
+  currentPhoto.value = keg.foto_url || `https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto`; 
+  isPhotoModalOpen.value = true 
+}
 
 const openEditModal = (keg) => { 
   Object.assign(editFormData, keg); 
@@ -649,10 +686,6 @@ const printLaporan = () => {
   window.print() 
 }
 
-const formattedDate = computed(() => {
-  const t = new Date(); const m = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-  return `${t.getDate()} ${m[t.getMonth()]} ${t.getFullYear()}`
-})
 const handleLogout = () => { authStore.logout(); router.push('/') }
 </script>
 
