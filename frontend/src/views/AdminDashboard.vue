@@ -215,19 +215,19 @@
             </div>
 
             <div class="flex flex-col md:col-span-1">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional / Boleh Kosong)</span></label>
               <div v-if="!imagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
-                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto</span></p>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto (Tidak Wajib)</span></p>
                   </div>
                   <input id="dropzone-file" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload" />
                 </label>
               </div>
               <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
                 <img :src="imagePreview" class="max-h-48 object-contain rounded shadow-sm">
-                <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg"><i class="fas fa-trash-alt text-xs"></i></button>
+                <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Hapus Gambar"><i class="fas fa-trash-alt text-xs"></i></button>
               </div>
             </div>
 
@@ -362,6 +362,7 @@
 
       <!-- ================= TEMPLATE CETAK LAPORAN PDF ================= -->
       <div class="hidden print:block w-full bg-white text-black p-4">
+        <!-- Struktur Print Laporan tetap sama... -->
         <div class="flex items-center border-b-4 border-black pb-4 mb-6">
           <img src="/logo-pu.png" alt="Logo PU" class="w-24 h-24 mr-6 object-contain">
           <div class="text-center w-full pr-12">
@@ -371,11 +372,8 @@
             <p class="text-sm mt-2">Jl. Pepaya No.34-C, Jadirejo, Kec. Sukajadi, Kota Pekanbaru, Riau 28126</p>
           </div>
         </div>
-
-        <div class="text-center mb-8">
-          <h2 class="text-xl font-bold underline">LAPORAN PELAKSANAAN KEGIATAN (SELESAI)</h2>
-        </div>
-
+        <!-- Sisanya dari print ... -->
+        <div class="text-center mb-8"><h2 class="text-xl font-bold underline">LAPORAN PELAKSANAAN KEGIATAN (SELESAI)</h2></div>
         <table class="w-full border-collapse border border-black text-sm text-left mb-12">
           <thead>
             <tr class="bg-gray-100">
@@ -401,20 +399,17 @@
             </tr>
           </tbody>
         </table>
-
         <div class="flex justify-between px-10 pt-4">
           <div class="text-center">
             <p>Mengetahui,</p>
             <p class="font-bold mb-20">Kepala BWS Sumatera III</p>
-            <p class="underline font-bold">(..........................................)</p>
-            <p>NIP. </p>
+            <p class="underline font-bold">(..........................................)</p><p>NIP. </p>
           </div>
           <div class="text-center">
             <p>Pekanbaru, ...............................</p>
             <p>Dibuat Oleh,</p>
             <p class="font-bold mb-20 mt-2">Admin / Petugas</p>
-            <p class="font-bold text-lg inline-block">(..........................................)</p>
-            <p>NIP. </p>
+            <p class="font-bold text-lg inline-block">(..........................................)</p><p>NIP. </p>
           </div>
         </div>
       </div>
@@ -460,19 +455,20 @@
 
             <!-- Upload Foto di Modal Edit -->
             <div class="md:col-span-2 flex flex-col mt-2">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional - Biarkan jika tidak diganti)</span></label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
               <div v-if="!editImagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="edit-dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
-                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto baru</span></p>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk tambah/ganti foto</span></p>
                   </div>
                   <input id="edit-dropzone-file" ref="editFileInput" type="file" accept="image/*" class="hidden" @change="handleEditFileUpload" />
                 </label>
               </div>
               <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
                 <img :src="editImagePreview" class="max-h-48 object-contain rounded shadow-sm">
-                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Ganti Foto"><i class="fas fa-trash-alt text-xs"></i></button>
+                <!-- Tombol ini sekarang berfungsi untuk Menghapus secara permanen (menjadi Kosong) ATAU agar pengguna bisa mengganti foto yang lain -->
+                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Hapus Gambar"><i class="fas fa-trash-alt text-xs"></i></button>
               </div>
             </div>
             
@@ -545,6 +541,8 @@ const isSubmittingEdit = ref(false)
 const editSelectedFile = ref(null)
 const editImagePreview = ref('')
 const editFileInput = ref(null)
+// State baru untuk melacak apakah user sengaja menekan tombol hapus foto di modal edit
+const isEditPhotoRemoved = ref(false)
 
 const editFormData = reactive({ id: null, nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', foto_url: '', preview_url: '', tanggal_mulai: '', tanggal_selesai: '' })
 
@@ -640,6 +638,7 @@ const handleEditFileUpload = (e) => {
   const file = e.target.files[0];
   if (file) {
     editSelectedFile.value = file;
+    isEditPhotoRemoved.value = false; // Reset state karena memilih gambar baru
     const reader = new FileReader();
     reader.onload = (event) => {
       editImagePreview.value = event.target.result;
@@ -648,9 +647,11 @@ const handleEditFileUpload = (e) => {
   }
 }
 
+// Berfungsi untuk mengosongkan gambar (menghapus) baik preview lama maupun file baru yg sedang disiapkan
 const removeEditImage = () => {
   editSelectedFile.value = null;
   editImagePreview.value = '';
+  isEditPhotoRemoved.value = true; // Tandai bahwa user sengaja ingin menghapus foto
   if (editFileInput.value) editFileInput.value.value = '';
 }
 
@@ -699,13 +700,17 @@ const openEditModal = (keg) => {
   // Tampilkan gambar lama pada preview edit jika ada
   editImagePreview.value = keg.foto_url || '';
   editSelectedFile.value = null;
+  isEditPhotoRemoved.value = false; // Reset tanda hapus
 
   isEditModalOpen.value = true 
 }
 
 const closeEditModal = () => {
   isEditModalOpen.value = false
-  removeEditImage();
+  editSelectedFile.value = null;
+  editImagePreview.value = '';
+  isEditPhotoRemoved.value = false;
+  if (editFileInput.value) editFileInput.value.value = '';
 }
 
 // --- SUBMIT EDIT ACTIVITY ---
@@ -714,8 +719,8 @@ const submitEdit = async () => {
   try {
     const lokasiDenganTag = `[${authStore.username}] ${editFormData.item_kegiatan}`;
 
-    // Jika ada file FOTO BARU, gunakan FormData
-    if (editSelectedFile.value) {
+    // Gunakan FormData jika user mengunggah foto baru ATAU jika user sengaja MENGHAPUS foto
+    if (editSelectedFile.value || isEditPhotoRemoved.value) {
       const formDataApi = new FormData();
       formDataApi.append('id', editFormData.id);
       formDataApi.append('nama_kegiatan', editFormData.nama_kegiatan);
@@ -724,11 +729,20 @@ const submitEdit = async () => {
       formDataApi.append('status', editFormData.status);
       formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai || '');
       formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai || '');
-      formDataApi.append('foto', editSelectedFile.value);
+      
+      // Jika ada file foto baru
+      if (editSelectedFile.value) {
+        formDataApi.append('foto', editSelectedFile.value);
+      } 
+      // Sinyal bahwa gambar dihapus & dikosongkan secara permanen
+      if (isEditPhotoRemoved.value) {
+        formDataApi.append('delete_foto', 'true');
+        formDataApi.append('remove_foto', 'true'); // Ditambahkan sebagai opsional format backend
+      }
 
       await activityStore.updateActivity(formDataApi);
     } 
-    // Jika TIDAK ADA foto baru, kirim object biasa agar kompatibel (tidak memutus foto lama)
+    // Jika tidak ada perubahan sama sekali pada foto (pakai JSON seperti biasa)
     else {
       const updatedData = { ...editFormData };
       updatedData.item_kegiatan = lokasiDenganTag;
