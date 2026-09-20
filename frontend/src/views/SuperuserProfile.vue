@@ -1,93 +1,104 @@
 <template>
-  <div class="admin-wrapper relative">
-   <!-- SIDEBAR -->
-<aside
-  class="sidebar print:hidden"
-  :class="{ active: isSidebarOpen }"
->
-  <!-- BRAND -->
-  <div class="sidebar-brand">
-    <img
-      src="@/assets/images/logo-pu.png"
-      alt="Logo PU"
-      class="sidebar-logo"
-    />
+  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen flex overflow-hidden">
+    
+    <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <div class="sidebar-brand-text">
-      <strong>BWS SUMATERA III</strong>
-      <span>PEKANBARU</span>
-    </div>
-  </div>
-
-  <!-- MENU -->
-  <nav class="sidebar-menu">
-
-    <!-- MENU UTAMA -->
-    <div class="menu-title">
-      MENU UTAMA
-    </div>
-
-    <router-link
-      to="/superuser"
-      class="menu-item"
+    <!-- SIDEBAR -->
+    <!-- Ditambahkan class Tailwind fixed, z-50, transition-transform agar responsif di mobile -->
+    <aside
+      class="sidebar print:hidden fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 lg:relative lg:translate-x-0"
+      :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
-      <i class="fa-solid fa-house"></i>
-      <span>Dashboard & Data</span>
-    </router-link>
+      <!-- BRAND -->
+      <div class="sidebar-brand">
+        <img
+          src="@/assets/images/logo-pu.png"
+          alt="Logo PU"
+          class="sidebar-logo"
+        />
+
+        <div class="sidebar-brand-text">
+          <strong>BWS SUMATERA III</strong>
+          <span>PEKANBARU</span>
+        </div>
+      </div>
+
+      <!-- MENU -->
+      <nav class="sidebar-menu">
+        <!-- MENU UTAMA -->
+        <div class="menu-title">
+          MENU UTAMA
+        </div>
+
+        <router-link
+          to="/superuser"
+          class="menu-item"
+          @click="isSidebarOpen = false"
+        >
+          <i class="fa-solid fa-house"></i>
+          <span>Dashboard & Data</span>
+        </router-link>
 
 
-    <!-- SISTEM & AKUN -->
-    <div class="menu-title">
-      SISTEM & AKUN
-    </div>
+        <!-- SISTEM & AKUN -->
+        <div class="menu-title">
+          SISTEM & AKUN
+        </div>
 
-    <router-link
-      to="/superuser"
-      class="menu-item"
-    >
-      <i class="fa-solid fa-users-gear"></i>
-      <span>Manajemen Akun</span>
-    </router-link>
+        <router-link
+          to="/superuser"
+          class="menu-item"
+          @click="isSidebarOpen = false"
+        >
+          <i class="fa-solid fa-users-gear"></i>
+          <span>Manajemen Akun</span>
+        </router-link>
 
-    <!-- PROFIL AKTIF -->
-    <a
-      href="#"
-      class="menu-item active"
-      @click.prevent
-    >
-      <i class="fa-solid fa-user"></i>
-      <span>Profil Saya</span>
-    </a>
+        <!-- PROFIL AKTIF -->
+        <a
+          href="#"
+          class="menu-item active"
+          @click.prevent="isSidebarOpen = false"
+        >
+          <i class="fa-solid fa-user"></i>
+          <span>Profil Saya</span>
+        </a>
+      </nav>
 
-  </nav>
+      <!-- LOGOUT -->
+      <div class="sidebar-bottom">
+        <a
+          href="#"
+          @click.prevent="handleLogout"
+          class="menu-item logout"
+        >
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
 
-  <!-- LOGOUT -->
-  <div class="sidebar-bottom">
-    <a
-      href="#"
-      @click.prevent="handleLogout"
-      class="menu-item logout"
-    >
-      <i class="fa-solid fa-right-from-bracket"></i>
-      <span>Logout</span>
-    </a>
-  </div>
-</aside>
-
-    <main class="main-content">
+    <!-- MAIN CONTENT -->
+    <main class="main-content flex-1 h-screen overflow-y-auto w-full">
       
-      <header class="topbar relative z-40">
-        <div class="topbar-left">
-          <div class="page-title">
-            <h1>Profil Pimpinan</h1>
-            <p>Manajemen akun dan kredensial Superuser</p>
+      <header class="topbar relative z-30 bg-white shadow-sm flex justify-between items-center px-4 py-3">
+        <div class="topbar-left flex items-center gap-4">
+          <!-- Tombol Hamburger Toggle -->
+          <button class="sidebar-toggle text-gray-600 hover:text-blue-600 focus:outline-none lg:hidden text-2xl" @click="isSidebarOpen = !isSidebarOpen">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="page-title hidden sm:block">
+            <h1 class="text-xl font-bold text-gray-800">Profil Pimpinan</h1>
+            <p class="text-xs text-gray-500">Manajemen akun dan kredensial Superuser</p>
           </div>
         </div>
 
         <div class="topbar-right flex items-center gap-4 relative">
           
+          <!-- Notifikasi Interaktif -->
           <div class="relative" id="notification-menu">
-            <button @click="toggleNotification" class="notification-button hover:bg-gray-100 p-2 rounded-full transition">
+            <button @click="toggleNotification" class="notification-button hover:bg-gray-100 p-2 rounded-full transition relative">
               <i class="fa-regular fa-bell text-gray-600 text-xl"></i>
               <span v-if="unreadNotifications > 0" class="notification-badge bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full absolute -top-1 -right-1 border-2 border-white">
                 {{ unreadNotifications }}
@@ -95,7 +106,7 @@
             </button>
 
             <transition name="fade-slide">
-              <div v-if="isNotificationOpen" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div v-if="isNotificationOpen" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
                 <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                   <h4 class="font-bold text-gray-700">Notifikasi</h4>
                   <button @click="markAllAsRead" class="text-xs text-blue-600 hover:underline">Tandai dibaca</button>
@@ -109,6 +120,7 @@
             </transition>
           </div>
 
+          <!-- Profil Interaktif -->
           <div class="relative" id="profile-menu">
             <div @click="toggleProfile" class="admin-profile cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition flex items-center gap-3">
               <div class="admin-avatar bg-blue-100 text-blue-600 w-10 h-10 flex items-center justify-center rounded-full">
@@ -122,7 +134,7 @@
             </div>
 
             <transition name="fade-slide">
-              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                 <a href="#" @click.prevent="handleLogout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i> Keluar</a>
               </div>
             </transition>
@@ -131,10 +143,12 @@
         </div>
       </header>
 
-      <section class="content z-10">
-        <div class="dashboard-grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- CONTENT -->
+      <section class="content z-10 p-4 md:p-6">
+        <div class="dashboard-grid grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <div class="dashboard-card col-span-1 p-6 border-2 border-blue-50 bg-white flex flex-col items-center text-center">
+          <!-- KARTU FOTO PROFIL -->
+          <div class="dashboard-card col-span-1 p-6 rounded-2xl border-2 border-blue-50 bg-white shadow-sm flex flex-col items-center text-center">
             <div class="relative mb-4 group cursor-pointer">
               <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
                 <i v-if="!profileImage" class="fa-solid fa-user text-5xl text-blue-300"></i>
@@ -164,7 +178,8 @@
             </div>
           </div>
 
-          <div class="dashboard-card col-span-1 lg:col-span-2 p-6 border border-gray-100">
+          <!-- FORM EDIT PROFIL -->
+          <div class="dashboard-card col-span-1 lg:col-span-2 p-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div class="border-b border-gray-100 pb-4 mb-6">
               <h3 class="font-bold text-lg text-gray-800">Pengaturan Akun</h3>
               <p class="text-sm text-gray-500">Perbarui informasi dasar dan kredensial akses Pimpinan.</p>
@@ -229,6 +244,9 @@ import '@/assets/admin.css'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// State Sidebar (DITAMBAHKAN AGAR HAMBURGER BERFUNGSI)
+const isSidebarOpen = ref(false)
 
 // --- LOGIKA TOPBAR ---
 const isNotificationOpen = ref(false)
