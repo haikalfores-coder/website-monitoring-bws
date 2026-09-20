@@ -23,42 +23,61 @@ export const useActivityStore = defineStore('activities', {
     },
 
     async addActivity(activityData) {
-      try {
-        const response = await fetch(`${API_URL}/api/kegiatan`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(activityData)
-        })
-        
-        if (response.ok) {
-          const newActivity = await response.json()
-          this.activities.unshift(newActivity)
-        } else {
-          alert('Gagal menyimpan data kegiatan ke database.')
-        }
-      } catch (error) {
-        console.error('Gagal menambah kegiatan:', error)
-        alert('Gagal terhubung ke server backend.')
+      // 1. Cek apakah data yang dikirim adalah FormData (ada file) atau Object biasa
+      const isFormData = activityData instanceof FormData;
+      
+      const options = {
+        method: 'POST',
+        // Jika FormData, langsung jadikan body. Jika object biasa, jadikan JSON String
+        body: isFormData ? activityData : JSON.stringify(activityData)
+      };
+
+      // 2. JANGAN atur Content-Type jika FormData (Browser akan mengaturnya otomatis)
+      if (!isFormData) {
+        options.headers = { 'Content-Type': 'application/json' };
+      }
+
+      const response = await fetch(`${API_URL}/api/kegiatan`, options);
+      
+      if (response.ok) {
+        const newActivity = await response.json();
+        this.activities.unshift(newActivity);
+      } else {
+        // Tangkap pesan error dari server dan lempar ke Vue Component
+        const errorData = await response.json().catch(() => null);
+        throw { response: { data: errorData } }; 
       }
     },
 
     async updateActivity(updatedData) {
-      try {
-        const response = await fetch(`${API_URL}/api/kegiatan/${updatedData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedData)
-        })
-        
-        if (response.ok) {
-          const index = this.activities.findIndex(a => a.id === updatedData.id)
-          if (index !== -1) this.activities[index] = { ...this.activities[index], ...updatedData }
-        } else {
-          alert('Gagal memperbarui data di database.')
+      // 1. Cek tipe data
+      const isFormData = updatedData instanceof FormData;
+      
+      // 2. Ambil ID dari FormData menggunakan .get('id'), atau dari object biasa menggunakan .id
+      const activityId = isFormData ? updatedData.get('id') : updatedData.id;
+
+      const options = {
+        method: 'PUT',
+        body: isFormData ? updatedData : JSON.stringify(updatedData)
+      };
+
+      if (!isFormData) {
+        options.headers = { 'Content-Type': 'application/json' };
+      }
+
+      const response = await fetch(`${API_URL}/api/kegiatan/${activityId}`, options);
+      
+      if (response.ok) {
+        // Ambil hasil response dari database agar data foto_url terupdate di tabel
+        const updatedResult = await response.json(); 
+        const index = this.activities.findIndex(a => a.id == activityId);
+        if (index !== -1) {
+          this.activities[index] = { ...this.activities[index], ...updatedResult };
         }
-      } catch (error) {
-        console.error('Gagal memperbarui kegiatan:', error)
-        alert('Gagal terhubung ke server backend.')
+      } else {
+        // Tangkap pesan error dari server dan lempar ke Vue Component
+        const errorData = await response.json().catch(() => null);
+        throw { response: { data: errorData } };
       }
     },
 
