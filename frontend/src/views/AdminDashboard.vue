@@ -215,19 +215,20 @@
             </div>
 
             <div class="flex flex-col md:col-span-1">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
+              <!-- Label diubah agar terlihat wajib -->
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-red-500 font-normal">* (Wajib)</span></label>
               <div v-if="!imagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
-                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto</span></p>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto (Wajib)</span></p>
                   </div>
                   <input id="dropzone-file" ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileUpload" />
                 </label>
               </div>
               <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
                 <img :src="imagePreview" class="max-h-48 object-contain rounded shadow-sm">
-                <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg"><i class="fas fa-trash-alt text-xs"></i></button>
+                <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Hapus Gambar"><i class="fas fa-trash-alt text-xs"></i></button>
               </div>
             </div>
 
@@ -460,19 +461,21 @@
 
             <!-- Upload Foto di Modal Edit -->
             <div class="md:col-span-2 flex flex-col mt-2">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional - Biarkan jika tidak diganti)</span></label>
+              <!-- Label pada Edit tetap Opsional -->
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
               <div v-if="!editImagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="edit-dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-3"></i>
-                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk unggah foto baru</span></p>
+                    <p class="mb-1 text-sm text-gray-600"><span class="font-semibold">Klik untuk tambah/ganti foto</span></p>
                   </div>
                   <input id="edit-dropzone-file" ref="editFileInput" type="file" accept="image/*" class="hidden" @change="handleEditFileUpload" />
                 </label>
               </div>
               <div v-else class="flex-1 relative w-full min-h-[160px] border rounded-lg bg-gray-100 p-2 flex justify-center items-center">
                 <img :src="editImagePreview" class="max-h-48 object-contain rounded shadow-sm">
-                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Ganti Foto"><i class="fas fa-trash-alt text-xs"></i></button>
+                <!-- Tombol ini berfungsi untuk Menghapus secara permanen (menjadi Kosong) ATAU agar pengguna bisa mengganti foto yang lain -->
+                <button @click.prevent="removeEditImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 hover:bg-red-600 shadow-lg" title="Hapus Gambar"><i class="fas fa-trash-alt text-xs"></i></button>
               </div>
             </div>
             
@@ -523,12 +526,7 @@ const myActivities = computed(() => {
 const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
 const notifications = ref([])
-const unreadNotifications = computed(() => notifications.value.filter(n => !n.read).length)
 
-const toggleNotification = () => {
-  isNotificationOpen.value = !isNotificationOpen.value; isProfileMenuOpen.value = false 
-  if (isNotificationOpen.value) notifications.value.forEach(n => n.read = true)
-}
 const toggleProfile = () => { isProfileMenuOpen.value = !isProfileMenuOpen.value; isNotificationOpen.value = false }
 const closeDropdownsOnClickOutside = (e) => {
   if (!e.target.closest('#notification-menu')) isNotificationOpen.value = false
@@ -536,15 +534,22 @@ const closeDropdownsOnClickOutside = (e) => {
 }
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-const showForm = ref(false); const selectedFile = ref(null); const imagePreview = ref(''); const fileInput = ref(null) 
+const showForm = ref(false); 
+const selectedFile = ref(null); 
+const imagePreview = ref(''); 
+const fileInput = ref(null); 
 const formData = reactive({ nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' })
-const isPhotoModalOpen = ref(false); const currentPhoto = ref('')
+const isPhotoModalOpen = ref(false); 
+const currentPhoto = ref('')
 
 const isEditModalOpen = ref(false)
 const isSubmittingEdit = ref(false)
 const editSelectedFile = ref(null)
 const editImagePreview = ref('')
 const editFileInput = ref(null)
+
+// State untuk melacak apakah user sengaja menekan tombol hapus foto di modal edit
+const isEditPhotoRemoved = ref(false)
 
 const editFormData = reactive({ id: null, nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', foto_url: '', preview_url: '', tanggal_mulai: '', tanggal_selesai: '' })
 
@@ -640,6 +645,7 @@ const handleEditFileUpload = (e) => {
   const file = e.target.files[0];
   if (file) {
     editSelectedFile.value = file;
+    isEditPhotoRemoved.value = false; 
     const reader = new FileReader();
     reader.onload = (event) => {
       editImagePreview.value = event.target.result;
@@ -651,36 +657,60 @@ const handleEditFileUpload = (e) => {
 const removeEditImage = () => {
   editSelectedFile.value = null;
   editImagePreview.value = '';
+  isEditPhotoRemoved.value = true; 
   if (editFileInput.value) editFileInput.value.value = '';
 }
 
-// --- SUBMIT ACTIVITY (TAMBAH DATA) ---
+// ==============================================
+// SUBMIT ACTIVITY (TAMBAH DATA) - FOTO WAJIB
+// ==============================================
 const submitActivity = async () => {
+  // Pengecekan Foto (Wajib)
+  if (!selectedFile.value) {
+    alert("Dokumentasi Foto wajib diunggah untuk menyimpan data kegiatan baru!");
+    return;
+  }
+
   isSubmitting.value = true;
   const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`;
   
   const formDataApi = new FormData();
   formDataApi.append('nama_kegiatan', formData.nama_kegiatan);
   formDataApi.append('item_kegiatan', lokasiDenganTag);
-  formDataApi.append('progress', formData.progress);
+  formDataApi.append('progress', Number(formData.progress)); 
   formDataApi.append('status', formData.status);
-  formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
-  formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
   
-  // (Hanya di-append jika foto diunggah / Opsional)
-  if (selectedFile.value) {
-    formDataApi.append('foto', selectedFile.value); 
+  if (formData.tanggal_mulai) {
+    formDataApi.append('tanggal_mulai', formData.tanggal_mulai);
   }
+  if (formData.tanggal_selesai) {
+    formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
+  }
+  
+  // Karena lolos if di atas, file pasti ada
+  formDataApi.append('foto', selectedFile.value); 
 
   try {
     await activityStore.addActivity(formDataApi);
     
+    // Reset Form
     Object.assign(formData, { nama_kegiatan: '', item_kegiatan: '', progress: 0, status: 'Menunggu', tanggal_mulai: '', tanggal_selesai: '' });
     removeImage(); 
     showForm.value = false;
   } catch (error) {
     console.error("Gagal saat submit data:", error);
-    alert('Terjadi kesalahan saat menyimpan data ke server!');
+    
+    // Alert untuk debugging jika error 422 masih muncul
+    let pesanError = 'Terjadi kesalahan validasi saat menyimpan data.\n';
+    if (error.response && error.response.data) {
+      if (error.response.data.errors) {
+        const errorList = Object.values(error.response.data.errors).flat().join('\n- ');
+        pesanError += '\nDetail Error:\n- ' + errorList;
+      } else if (error.response.data.message) {
+        pesanError += '\nPesan: ' + error.response.data.message;
+      }
+    }
+    alert(pesanError);
   } finally {
     isSubmitting.value = false;
   }
@@ -696,49 +726,84 @@ const openEditModal = (keg) => {
   editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
   editFormData.status = getDisplayStatus(keg); 
   
-  // Tampilkan gambar lama pada preview edit jika ada
   editImagePreview.value = keg.foto_url || '';
   editSelectedFile.value = null;
+  isEditPhotoRemoved.value = false; 
 
   isEditModalOpen.value = true 
 }
 
 const closeEditModal = () => {
   isEditModalOpen.value = false
-  removeEditImage();
+  editSelectedFile.value = null;
+  editImagePreview.value = '';
+  isEditPhotoRemoved.value = false;
+  if (editFileInput.value) editFileInput.value.value = '';
 }
 
-// --- SUBMIT EDIT ACTIVITY ---
+// ==============================================
+// SUBMIT EDIT ACTIVITY - FOTO OPSIONAL / BISA HAPUS
+// ==============================================
 const submitEdit = async () => { 
   isSubmittingEdit.value = true;
   try {
     const lokasiDenganTag = `[${authStore.username}] ${editFormData.item_kegiatan}`;
 
-    // Jika ada file FOTO BARU, gunakan FormData
-    if (editSelectedFile.value) {
+    // Gunakan FormData jika user mengunggah foto baru ATAU jika user sengaja MENGHAPUS foto
+    if (editSelectedFile.value || isEditPhotoRemoved.value) {
       const formDataApi = new FormData();
+      
       formDataApi.append('id', editFormData.id);
       formDataApi.append('nama_kegiatan', editFormData.nama_kegiatan);
       formDataApi.append('item_kegiatan', lokasiDenganTag);
-      formDataApi.append('progress', editFormData.progress);
+      formDataApi.append('progress', Number(editFormData.progress));
       formDataApi.append('status', editFormData.status);
-      formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai || '');
-      formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai || '');
-      formDataApi.append('foto', editSelectedFile.value);
+      
+      if (editFormData.tanggal_mulai) {
+        formDataApi.append('tanggal_mulai', editFormData.tanggal_mulai);
+      }
+      if (editFormData.tanggal_selesai) {
+        formDataApi.append('tanggal_selesai', editFormData.tanggal_selesai);
+      }
+      
+      if (editSelectedFile.value) {
+        formDataApi.append('foto', editSelectedFile.value);
+      } 
+      if (isEditPhotoRemoved.value) {
+        formDataApi.append('delete_foto', 'true');
+        formDataApi.append('remove_foto', 'true'); 
+      }
 
       await activityStore.updateActivity(formDataApi);
     } 
-    // Jika TIDAK ADA foto baru, kirim object biasa agar kompatibel (tidak memutus foto lama)
+    // Jika tidak ada perubahan sama sekali pada foto (pakai JSON)
     else {
       const updatedData = { ...editFormData };
       updatedData.item_kegiatan = lokasiDenganTag;
+      updatedData.progress = Number(updatedData.progress);
+      
+      // Hapus properti tanggal jika kosong agar tidak men-trigger error date format
+      if (!updatedData.tanggal_mulai) delete updatedData.tanggal_mulai;
+      if (!updatedData.tanggal_selesai) delete updatedData.tanggal_selesai;
+
       await activityStore.updateActivity(updatedData);
     }
 
     closeEditModal();
   } catch (error) {
     console.error("Gagal saat mengupdate data:", error);
-    alert('Terjadi kesalahan saat mengupdate data!');
+    
+    // Alert untuk debugging jika error 422 masih muncul
+    let pesanError = 'Terjadi kesalahan saat mengupdate data.\n';
+    if (error.response && error.response.data) {
+      if (error.response.data.errors) {
+        const errorList = Object.values(error.response.data.errors).flat().join('\n- ');
+        pesanError += '\nDetail Error:\n- ' + errorList;
+      } else if (error.response.data.message) {
+        pesanError += '\nPesan: ' + error.response.data.message;
+      }
+    }
+    alert(pesanError);
   } finally {
     isSubmittingEdit.value = false;
   }
