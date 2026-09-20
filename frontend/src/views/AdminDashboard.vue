@@ -1,12 +1,7 @@
 <template>
-  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen flex overflow-hidden">
-    
-    <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
-    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
-
+  <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
     <!-- SIDEBAR -->
-    <!-- Ditambahkan class Tailwind fixed, z-50, transition-transform agar buka-tutup lancar di mobile -->
-    <aside class="sidebar print:hidden fixed inset-y-0 left-0 z-50 w-64 h-screen bg-white shadow-lg transform transition-transform duration-300 lg:relative lg:translate-x-0" :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+    <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <div class="sidebar-brand">
         <img src="/logo-pu.png" alt="Logo PU" class="sidebar-logo">
         <div class="sidebar-brand-text">
@@ -17,13 +12,13 @@
 
       <nav class="sidebar-menu">
         <div class="menu-title">MENU UTAMA</div>
-        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
+        <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop()" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
           <i class="fa-solid fa-house"></i>
           <span>Dashboard</span>
         </a>
 
         <div class="menu-title">DATA & LAPORAN</div>
-        <a href="#tabel-data" @click="activeMenu = 'data'; isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'data' }">
+        <a href="#tabel-data" @click="activeMenu = 'data'" class="menu-item" :class="{ 'active': activeMenu === 'data' }">
           <i class="fa-solid fa-clipboard-list"></i>
           <span>Data Kegiatan</span>
         </a>
@@ -35,7 +30,7 @@
         </a>
 
         <div class="menu-title">SISTEM</div>
-        <router-link to="/profil" class="menu-item" @click="isSidebarOpen = false">
+        <router-link to="/profil" class="menu-item">
           <i class="fa-solid fa-user"></i>
           <span>Profil</span>
         </router-link>
@@ -50,16 +45,15 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content flex-1 h-screen overflow-y-auto w-full">
-      <header class="topbar relative z-30 print:hidden bg-white shadow-sm flex justify-between items-center px-4 py-3">
-        <div class="topbar-left flex items-center gap-4">
-          <!-- Tombol Hamburger Toggle -->
-          <button class="sidebar-toggle text-gray-600 hover:text-blue-600 focus:outline-none lg:hidden text-2xl" @click="isSidebarOpen = !isSidebarOpen">
+    <main class="main-content">
+      <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="page-title hidden sm:block">
-            <h1 class="text-xl font-bold text-gray-800">Dashboard Administrator</h1>
-            <p class="text-xs text-gray-500">Area Kerja Pribadi: @{{ authStore.username }}</p>
+          <div class="page-title">
+            <h1>Dashboard Administrator</h1>
+            <p>Area Kerja Pribadi: @{{ authStore.username }}</p>
           </div>
         </div>
 
@@ -78,7 +72,7 @@
             </div>
 
             <transition name="fade-slide">
-              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+              <div v-if="isProfileMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
                 <router-link to="/profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                   <i class="fas fa-user-circle mr-2 w-4 text-center"></i> Profil Saya
                 </router-link>
@@ -90,7 +84,7 @@
         </div>
       </header>
 
-      <section class="content z-10 print:hidden p-4 md:p-6">
+      <section class="content z-10 print:hidden">
         
         <!-- VISUALISASI DATA (GRAFIK & STATISTIK) -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -179,6 +173,7 @@
               </div>
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Lokasi Detail (Bebas)</label>
+                <!-- KINI BEBAS DIISI OLEH ADMIN -->
                 <input v-model="formData.item_kegiatan" type="text" placeholder="Contoh: Jl. Sudirman atau Sungai Kampar Kanan" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
               </div>
               
@@ -277,7 +272,7 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[600px]">
+            <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="border-b bg-gray-50">
                   <th v-if="activeTab === 'selesai'" class="p-4 w-12 text-center">
@@ -302,6 +297,7 @@
 
                   <td class="p-4 text-sm font-semibold text-gray-800">
                     {{ keg.nama_kegiatan }}
+                    <!-- Menggunakan extractLokasi agar Tag Username disembunyikan -->
                     <span class="block text-xs font-normal text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>{{ extractLokasi(keg.item_kegiatan) }}</span>
                     <div v-if="keg.foto_url" @click="openPhotoModal(keg)" class="text-xs font-normal text-blue-600 hover:text-blue-800 cursor-pointer mt-1 max-w-[150px] flex items-center">
                       <i class="fas fa-image mr-1"></i> Lihat Lampiran
@@ -436,6 +432,7 @@
             <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nama Kegiatan</label><input v-model="editFormData.nama_kegiatan" type="text" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required></div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Lokasi Detail</label>
+              <!-- Bebas diedit -->
               <input v-model="editFormData.item_kegiatan" type="text" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
             </div>
             <div><label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Mulai</label><input v-model="editFormData.tanggal_mulai" type="date" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"></div>
@@ -480,18 +477,22 @@ const activeMenu = ref('dashboard')
 const searchQuery = ref('') 
 const activeTab = ref('aktif') 
 
+// ================= LOGIKA DATA OWNERSHIP (ISOLASI DATA) =================
+// Menghilangkan Tag Rahasia di frontend agar tabel terlihat rapi
 const extractLokasi = (text) => {
   if (!text) return ''
-  const match = text.match(/^\[(.*?)\]\s(.*)/) 
+  const match = text.match(/^\[(.*?)\]\s(.*)/) // Mencari pola "[username] Lokasi Asli"
   if (match) return match[2]
   return text
 }
 
+// Menyaring SEMUA data kegiatan dari Database agar HANYA data buatan Admin ini yang muncul
 const myActivities = computed(() => {
   return activityStore.activities.filter(keg => 
     keg.item_kegiatan?.startsWith(`[${authStore.username}]`)
   )
 })
+// =========================================================================
 
 const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
@@ -525,7 +526,7 @@ onMounted(() => {
 onUnmounted(() => document.removeEventListener('click', closeDropdownsOnClickOutside))
 
 const openForm = () => {
-  formData.item_kegiatan = '' 
+  formData.item_kegiatan = '' // Dikosongkan agar admin bebas mengetik
   showForm.value = true
 }
 
@@ -543,6 +544,7 @@ const syncStatusWithProgress = (dataObj) => {
   else if (dataObj.progress > 0 && dataObj.status === 'Menunggu') dataObj.status = 'Berjalan'
 }
 
+// LOGIKA STATISTIK (MENGGUNAKAN 'myActivities' agar yang dihitung hanya miliknya)
 const totalKegiatan = computed(() => myActivities.value.length)
 const countSelesai = computed(() => myActivities.value.filter(keg => getDisplayStatus(keg) === 'Selesai').length)
 const countBerjalan = computed(() => myActivities.value.filter(keg => getDisplayStatus(keg) === 'Berjalan').length)
@@ -561,6 +563,7 @@ const activeActivitiesProgress = computed(() => {
   return myActivities.value.filter(k => getDisplayStatus(k) !== 'Selesai' && k.progress > 0).sort((a, b) => b.progress - a.progress)
 })
 
+// LOGIKA TABEL (Tab Aktif vs Selesai)
 const displayedActivities = computed(() => {
   let baseData = activeTab.value === 'aktif' 
     ? myActivities.value.filter(keg => getDisplayStatus(keg) !== 'Selesai')
@@ -587,26 +590,15 @@ const toggleSelectAllSelesai = () => {
 
 const activitiesToPrint = computed(() => myActivities.value.filter(keg => selectedToPrint.value.includes(keg.id)))
 
-// PERBAIKAN 2: Menggunakan FileReader agar format gambar menjadi Base64 dan tersimpan permanen
 const handleFileUpload = (e) => {
-  const file = e.target.files[0]; 
-  if (file) { 
-    selectedFile.value = file; 
-    
-    // Ubah gambar menjadi Base64 String agar tidak hilang saat refresh halaman
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      imagePreview.value = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
+  const file = e.target.files[0]; if (file) { selectedFile.value = file; imagePreview.value = URL.createObjectURL(file) }
 }
-
 const removeImage = () => { selectedFile.value = null; imagePreview.value = ''; if (fileInput.value) fileInput.value.value = '' }
 
 const submitActivity = async () => {
   if (!selectedFile.value) { alert('Harap unggah foto!'); return }
   
+  // Sembunyikan Username di dalam data Lokasi
   const lokasiDenganTag = `[${authStore.username}] ${formData.item_kegiatan}`
   
   const finalData = { ...formData, item_kegiatan: lokasiDenganTag, foto_url: selectedFile.value.name, preview_url: imagePreview.value }
@@ -620,7 +612,7 @@ const openPhotoModal = (keg) => { currentPhoto.value = keg.preview_url || `https
 
 const openEditModal = (keg) => { 
   Object.assign(editFormData, keg); 
-  editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
+  editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan) // Buang tag-nya saat form edit terbuka
   editFormData.status = getDisplayStatus(keg); 
   isEditModalOpen.value = true 
 }
@@ -628,6 +620,7 @@ const openEditModal = (keg) => {
 const closeEditModal = () => isEditModalOpen.value = false
 const submitEdit = async () => { 
   const updatedData = { ...editFormData }
+  // Tempelkan lagi Tag-nya sebelum dikirim ke Database
   updatedData.item_kegiatan = `[${authStore.username}] ${editFormData.item_kegiatan}`
   
   await activityStore.updateActivity(updatedData); 
