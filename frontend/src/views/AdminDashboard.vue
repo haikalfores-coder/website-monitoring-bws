@@ -215,7 +215,6 @@
             </div>
 
             <div class="flex flex-col md:col-span-1">
-              <!-- Label diubah agar terlihat wajib -->
               <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-red-500 font-normal">* (Wajib)</span></label>
               <div v-if="!imagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
@@ -309,6 +308,7 @@
                   <td class="p-4 text-sm font-semibold text-gray-800">
                     {{ keg.nama_kegiatan }}
                     <span class="block text-xs font-normal text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>{{ extractLokasi(keg.item_kegiatan) }}</span>
+                    <!-- PERBAIKAN: Cek foto dengan helper URL backend -->
                     <div v-if="keg.foto_url" @click="openPhotoModal(keg)" class="text-xs font-normal text-blue-600 hover:text-blue-800 cursor-pointer mt-1 max-w-[150px] flex items-center">
                       <i class="fas fa-image mr-1"></i> Lihat Lampiran
                     </div>
@@ -461,8 +461,7 @@
 
             <!-- Upload Foto di Modal Edit -->
             <div class="md:col-span-2 flex flex-col mt-2">
-              <!-- Label pada Edit tetap Opsional -->
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-gray-400 font-normal">(Opsional)</span></label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Dokumentasi Foto <span class="text-red-500 font-normal">* (Wajib ada foto)</span></label>
               <div v-if="!editImagePreview" class="flex-1 flex items-center justify-center w-full">
                 <label for="edit-dropzone-file" class="flex flex-col items-center justify-center w-full h-full min-h-[160px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
                   <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -504,6 +503,18 @@ const router = useRouter()
 const authStore = useAuthStore()
 const activityStore = useActivityStore()
 
+// --- PERBAIKAN URL GAMBAR ---
+// Ambil URL backend dari Vite Env (Misal: https://monitoring-bws.railway.app)
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Fungsi untuk menggabungkan path foto agar URL fotonya utuh (tidak rusak)
+const getFullImageUrl = (path) => {
+  if (!path) return 'https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto'
+  if (path.startsWith('http') || path.startsWith('data:')) return path
+  return `${BACKEND_URL}${path}`
+}
+// ----------------------------
+
 const isSidebarOpen = ref(false)
 const activeMenu = ref('dashboard') 
 const searchQuery = ref('') 
@@ -525,7 +536,6 @@ const myActivities = computed(() => {
 
 const isNotificationOpen = ref(false)
 const isProfileMenuOpen = ref(false)
-const notifications = ref([])
 
 const toggleProfile = () => { isProfileMenuOpen.value = !isProfileMenuOpen.value; isNotificationOpen.value = false }
 const closeDropdownsOnClickOutside = (e) => {
@@ -687,7 +697,6 @@ const submitActivity = async () => {
     formDataApi.append('tanggal_selesai', formData.tanggal_selesai);
   }
   
-  // Karena lolos if di atas, file pasti ada
   formDataApi.append('foto', selectedFile.value); 
 
   try {
@@ -699,8 +708,6 @@ const submitActivity = async () => {
     showForm.value = false;
   } catch (error) {
     console.error("Gagal saat submit data:", error);
-    
-    // Alert untuk debugging jika error 422 masih muncul
     let pesanError = 'Terjadi kesalahan validasi saat menyimpan data.\n';
     if (error.response && error.response.data) {
       if (error.response.data.errors) {
@@ -716,17 +723,20 @@ const submitActivity = async () => {
   }
 }
 
+// Menampilkan gambar pada Modal Foto dengan URL Utuh
 const openPhotoModal = (keg) => { 
-  currentPhoto.value = keg.foto_url || `https://placehold.co/600x400/eeeeee/888888?text=Tidak+Ada+Foto`; 
+  currentPhoto.value = getFullImageUrl(keg.foto_url)
   isPhotoModalOpen.value = true 
 }
 
+// Membuka Modal Edit dan Menampilkan Gambar Preview dengan URL Utuh
 const openEditModal = (keg) => { 
   Object.assign(editFormData, keg); 
   editFormData.item_kegiatan = extractLokasi(keg.item_kegiatan)
   editFormData.status = getDisplayStatus(keg); 
   
-  editImagePreview.value = keg.foto_url || '';
+  // Perbaikan preview image edit
+  editImagePreview.value = keg.foto_url ? getFullImageUrl(keg.foto_url) : '';
   editSelectedFile.value = null;
   isEditPhotoRemoved.value = false; 
 
@@ -742,9 +752,15 @@ const closeEditModal = () => {
 }
 
 // ==============================================
-// SUBMIT EDIT ACTIVITY - FOTO OPSIONAL / BISA HAPUS
+// SUBMIT EDIT ACTIVITY - FOTO WAJIB ADA
 // ==============================================
 const submitEdit = async () => { 
+  // Pengecekan Foto (Wajib ada)
+  if (!editImagePreview.value && !editSelectedFile.value) {
+    alert("Dokumentasi Foto wajib ada! Silakan unggah foto baru jika yang lama dihapus.");
+    return;
+  }
+
   isSubmittingEdit.value = true;
   try {
     const lokasiDenganTag = `[${authStore.username}] ${editFormData.item_kegiatan}`;
@@ -792,8 +808,6 @@ const submitEdit = async () => {
     closeEditModal();
   } catch (error) {
     console.error("Gagal saat mengupdate data:", error);
-    
-    // Alert untuk debugging jika error 422 masih muncul
     let pesanError = 'Terjadi kesalahan saat mengupdate data.\n';
     if (error.response && error.response.data) {
       if (error.response.data.errors) {
