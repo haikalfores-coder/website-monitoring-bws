@@ -19,24 +19,23 @@
         
         <!-- Menu Gabungan Dashboard & Data -->
         <a href="#" @click.prevent="activeMenu = 'dashboard'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'dashboard' }">
-          <i class="fa-solid fa-chart-line"></i> <!-- Bisa diganti fa-house atau icon lain -->
+          <i class="fa-solid fa-house"></i>
           <span>Dashboard & Data</span>
         </a>
 
-        <div class="menu-title">LAPORAN & SISTEM</div>
-        
-        <!-- Tombol Cetak di Sidebar -->
+        <!-- Tombol Cetak dipindah ke Menu Utama -->
         <a href="#" @click.prevent="printLaporan" class="menu-item font-bold transition" :class="selectedToPrint.length > 0 ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 bg-gray-50 cursor-not-allowed'">
           <i class="fa-solid fa-file-pdf"></i>
-          <span>Cetak PDF ({{ selectedToPrint.length }})</span>
+          <span>Cetak PDF Laporan ({{ selectedToPrint.length }})</span>
         </a>
 
+        <div class="menu-title">SISTEM</div>
+        
         <router-link to="/profil" class="menu-item" @click="isSidebarOpen = false">
           <i class="fa-solid fa-user"></i>
           <span>Profil Saya</span>
         </router-link>
       </nav>
-
       <div class="sidebar-bottom">
         <a href="#" @click.prevent="handleLogout" class="menu-item logout">
           <i class="fa-solid fa-right-from-bracket"></i>
