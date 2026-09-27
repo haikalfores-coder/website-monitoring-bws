@@ -4,7 +4,7 @@
     <!-- OVERLAY UNTUK MOBILE (Klik di luar sidebar untuk menutup) -->
     <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
 
-    <!-- SIDEBAR (Layout dikembalikan ke admin.css) -->
+    <!-- SIDEBAR -->
     <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <!-- BRAND -->
       <div class="sidebar-brand">
@@ -35,20 +35,10 @@
           <span>Dashboard & Data</span>
         </router-link>
 
-
         <!-- SISTEM & AKUN -->
         <div class="menu-title">
           SISTEM & AKUN
         </div>
-
-        <router-link
-          to="/superuser"
-          class="menu-item"
-          @click="isSidebarOpen = false"
-        >
-          <i class="fa-solid fa-users-gear"></i>
-          <span>Manajemen Akun</span>
-        </router-link>
 
         <!-- PROFIL AKTIF -->
         <a
@@ -86,7 +76,7 @@
           </button>
           <div class="page-title hidden sm:block">
             <h1 class="text-xl font-bold text-gray-800">Profil Pimpinan</h1>
-            <p class="text-xs text-gray-500">Manajemen akun dan kredensial Superuser</p>
+            <p class="text-xs text-gray-500">Manajemen profil dan kredensial Superuser</p>
           </div>
         </div>
 
