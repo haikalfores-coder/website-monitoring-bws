@@ -27,11 +27,7 @@
         </a>
 
         <div class="menu-title">SISTEM & AKUN</div>
-        <a href="#" @click.prevent="activeMenu = 'akun'; scrollToTop(); isSidebarOpen = false" class="menu-item" :class="{ 'active': activeMenu === 'akun' }">
-          <i class="fa-solid fa-users-gear"></i>
-          <span>Manajemen Akun</span>
-        </a>
-
+        
         <router-link to="/superuser-profil" class="menu-item" @click="isSidebarOpen = false">
           <i class="fa-solid fa-user"></i>
           <span>Profil Saya</span>
@@ -58,9 +54,7 @@
           </button>
           <div class="page-title hidden sm:block">
             <h1 v-if="activeMenu === 'dashboard'" class="text-xl font-bold text-gray-800">Dashboard {{ myRoleTitle }}</h1>
-            <h1 v-if="activeMenu === 'akun'" class="text-xl font-bold text-gray-800">Manajemen Akun</h1>
             <p v-if="activeMenu === 'dashboard'" class="text-xs text-gray-500">Monitoring Seluruh Sektor Sungai</p>
-            <p v-if="activeMenu === 'akun'" class="text-xs text-gray-500">Pengaturan Akses Pengguna Sistem</p>
           </div>
         </div>
 
@@ -271,70 +265,6 @@
           </div>
         </div>
 
-        <!-- ================= HALAMAN MANAJEMEN AKUN ================= -->
-        <div v-if="activeMenu === 'akun'" class="animate-fade-in">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <div class="bg-blue-600 text-white p-5">
-              <h3 class="font-bold text-lg"><i class="fas fa-user-plus mr-2"></i>Daftarkan Akun Sistem</h3>
-              <p class="text-blue-100 text-sm mt-1">Gunakan formulir ini untuk mendaftarkan akun ke Database. Masukkan password yang simpel.</p>
-            </div>
-            
-            <form @submit.prevent="submitNewUser" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Username (Simpel)</label>
-                <input v-model="newUser.username" type="text" placeholder="Contoh: admin1" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap / Deskripsi</label>
-                <input v-model="newUser.name" type="text" placeholder="Contoh: Admin 1 (Sungai Siak)" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Role (Hak Akses)</label>
-                <select v-model="newUser.role" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
-                  <option value="admin">Admin (Input Data)</option>
-                  <option value="superuser">Superuser (Pimpinan)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                <input v-model="newUser.password" type="password" placeholder="Contoh: admin1" class="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" required>
-              </div>
-              <div class="md:col-span-2 flex justify-end mt-2">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition">Daftarkan Akun ke Database</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-              <h3 class="font-bold text-gray-800">Daftar Pengguna Terdaftar</h3>
-              <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">{{ systemUsers.length }} Akun</span>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr class="bg-gray-50 text-gray-600 text-sm">
-                    <th class="p-4 font-semibold">No</th>
-                    <th class="p-4 font-semibold">Username</th>
-                    <th class="p-4 font-semibold">Nama / Deskripsi</th>
-                    <th class="p-4 font-semibold">Role</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(user, index) in systemUsers" :key="index" class="border-b hover:bg-gray-50 text-sm">
-                    <td class="p-4 text-gray-500">{{ index + 1 }}</td>
-                    <td class="p-4 font-semibold text-gray-800">@{{ user.username }}</td>
-                    <td class="p-4 text-gray-600">{{ user.name }}</td>
-                    <td class="p-4">
-                      <span v-if="user.role === 'admin'" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-200">Admin</span>
-                      <span v-if="user.role === 'superuser'" class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold border border-purple-200">Superuser</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
       </section>
 
       <footer class="main-footer flex flex-wrap items-center justify-center gap-2 p-4 text-sm text-gray-500 mt-auto border-t bg-white relative z-10 print:hidden">
@@ -413,7 +343,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useActivityStore } from '@/stores/activities'
@@ -473,28 +403,6 @@ const parseLokasi = (text) => {
   return { username: 'Admin Lama', lokasi: text } // Jika data lama belum ada tag
 }
 // =======================================================================
-
-
-// ================== DATA MANAJEMEN AKUN ==================
-const systemUsers = ref([
-  { username: 'admin1', name: 'Admin 1 (Sungai Siak)', role: 'admin' },
-  { username: 'admin2', name: 'Admin 2 (Sungai Kampar)', role: 'admin' },
-  { username: 'admin3', name: 'Admin 3 (Sungai Rokan)', role: 'admin' },
-  { username: 'admin4', name: 'Admin 4 (Sungai Indragiri)', role: 'admin' },
-  { username: 'super1', name: 'Superuser 1 (Kepala Balai)', role: 'superuser' },
-  { username: 'super2', name: 'Superuser 2 (Pengawas Lapangan)', role: 'superuser' },
-  { username: 'super3', name: 'Superuser 3 (Sistem IT)', role: 'superuser' }
-])
-
-const newUser = reactive({ username: '', name: '', role: 'admin', password: '' })
-
-const submitNewUser = async () => {
-  if(newUser.password.length < 5) { alert('Password terlalu pendek!'); return }
-  systemUsers.value.push({ username: newUser.username, name: newUser.name, role: newUser.role })
-  alert(`Akun @${newUser.username} berhasil ditambahkan ke daftar! Pastikan Backend API sudah tersambung.`)
-  newUser.username = ''; newUser.name = ''; newUser.role = 'admin'; newUser.password = ''
-}
-// =========================================================
 
 onMounted(() => {
   if (!authStore.isAuthenticated || authStore.role !== 'superuser') router.push('/')
