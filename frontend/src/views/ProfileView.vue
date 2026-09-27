@@ -1,9 +1,12 @@
 <template>
   <div class="admin-wrapper relative bg-gray-50/50 min-h-screen">
-    <!-- SIDEBAR (Disinkronkan dengan AdminDashboard) -->
+    
+    <!-- OVERLAY UNTUK MOBILE -->
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- SIDEBAR -->
     <aside class="sidebar print:hidden" :class="{ 'active': isSidebarOpen }">
       <div class="sidebar-brand">
-        <!-- Path logo disamakan dengan dashboard -->
         <img src="/logo-pu.png" alt="Logo PU" class="sidebar-logo">
         <div class="sidebar-brand-text">
           <strong>BWS SUMATERA III</strong>
@@ -13,15 +16,17 @@
 
       <nav class="sidebar-menu">
         <div class="menu-title">MENU UTAMA</div>
-        <!-- Link untuk kembali ke halaman Admin Dashboard -->
-        <router-link to="/admin" class="menu-item text-gray-500 hover:bg-gray-100">
+        
+        <!-- Link kembali ke Admin Dashboard (Class abu-abu dihapus agar mengikuti CSS asli) -->
+        <router-link to="/admin" class="menu-item" @click="isSidebarOpen = false">
           <i class="fa-solid fa-house"></i>
           <span>Dashboard & Data</span>
         </router-link>
 
         <div class="menu-title">SISTEM</div>
+        
         <!-- Menu Profil Aktif -->
-        <router-link to="/profil" class="menu-item active">
+        <router-link to="/profil" class="menu-item active" @click="isSidebarOpen = false">
           <i class="fa-solid fa-user"></i>
           <span>Profil Saya</span>
         </router-link>
@@ -38,15 +43,15 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
       
-      <!-- TOPBAR (Disinkronkan dengan AdminDashboard) -->
+      <!-- TOPBAR -->
       <header class="topbar relative z-40 print:hidden bg-white shadow-sm">
         <div class="topbar-left">
           <button class="sidebar-toggle" @click="isSidebarOpen = !isSidebarOpen">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <div class="page-title">
-            <h1>Profil Pengguna</h1>
-            <p>Manajemen akun dan kredensial sistem</p>
+          <div class="page-title hidden sm:block">
+            <h1 class="text-xl font-bold text-gray-800">Profil Pengguna</h1>
+            <p class="text-xs text-gray-500">Manajemen akun dan kredensial sistem</p>
           </div>
         </div>
 
@@ -58,7 +63,6 @@
                 <i class="fa-solid fa-user"></i>
               </div>
               <div class="admin-info hidden sm:block">
-                <!-- Nama dan Jabatan Dinamis -->
                 <strong class="block text-sm text-gray-800">@{{ authStore.username }}</strong>
                 <span class="block text-xs text-gray-500">Admin Sektor {{ mySector }}</span>
               </div>
@@ -86,7 +90,7 @@
         <div class="dashboard-grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- KARTU FOTO PROFIL -->
-          <div class="dashboard-card col-span-1 p-6 border-2 border-blue-50 bg-white flex flex-col items-center text-center rounded-2xl shadow-sm">
+          <div class="dashboard-card col-span-1 p-6 border border-gray-100 bg-white flex flex-col items-center text-center rounded-2xl shadow-sm">
             <div class="relative mb-4 group cursor-pointer">
               <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-blue-100 to-blue-50 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
                 <i v-if="!profileImage" class="fa-solid fa-user text-5xl text-blue-300"></i>
