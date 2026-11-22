@@ -17,17 +17,17 @@ from models import Base, engine, SessionLocal, User
 # KONFIGURASI LOKASI PENYIMPANAN
 # --------------------------------------------------
 
-IS_RAILWAY = bool(os.getenv("RAILWAY_ENVIRONMENT"))
+DATA_DIR = "/app/data"
 
-if IS_RAILWAY:
-    DATA_DIR = "/app/data"
+# Jika direktori Volume tersedia, gunakan untuk database dan upload.
+# Jika tidak, gunakan folder lokal.
+if os.path.isdir(DATA_DIR):
+    IS_PERSISTENT_STORAGE = True
     UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 else:
-    DATA_DIR = "."
+    IS_PERSISTENT_STORAGE = False
     UPLOAD_DIR = "./uploads"
 
-# Membuat folder penyimpanan jika belum tersedia
-os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
@@ -37,7 +37,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(
     title="API Monitoring BWS Sumatera III",
-    description="Sistem backend untuk monitoring kegiatan, dikelola oleh Admin dan dipantau oleh Superuser.",
+    description=(
+        "Sistem backend untuk monitoring kegiatan, "
+        "dikelola oleh Admin dan dipantau oleh Superuser."
+    ),
     version="1.0.0"
 )
 
@@ -69,12 +72,23 @@ app.mount(
 
 
 # --------------------------------------------------
+# PEMERIKSAAN KONFIGURASI DATABASE DAN VOLUME
+# --------------------------------------------------
+
+print("\n========== PEMERIKSAAN DATABASE ==========")
+print("Lingkungan Railway:", bool(os.getenv("RAILWAY_ENVIRONMENT")))
+print("Folder /app/data tersedia:", os.path.isdir(DATA_DIR))
+print("Penyimpanan persisten terdeteksi:", IS_PERSISTENT_STORAGE)
+print("Lokasi database:", engine.url.database)
+print("Lokasi folder upload:", UPLOAD_DIR)
+print("Folder upload tersedia:", os.path.isdir(UPLOAD_DIR))
+
+
+# --------------------------------------------------
 # MEMBUAT TABEL DATABASE
 # --------------------------------------------------
 
 Base.metadata.create_all(bind=engine)
-
-print("Lokasi database:", engine.url.database)
 
 # Memeriksa versi SQLite yang digunakan database
 with engine.connect() as connection:
@@ -82,7 +96,13 @@ with engine.connect() as connection:
         text("SELECT sqlite_version()")
     ).scalar_one()
 
+    database_integrity = connection.execute(
+        text("PRAGMA integrity_check")
+    ).scalar_one()
+
 print("Versi SQLite database:", sqlite_version)
+print("Pemeriksaan integritas database:", database_integrity)
+print("==========================================\n")
 
 
 # --------------------------------------------------
@@ -121,8 +141,6 @@ def buat_user_default():
         ]
 
         for user_data in default_users:
-
-            # Periksa apakah username sudah tersedia
             existing_user = db.query(User).filter(
                 User.username == user_data["username"]
             ).first()
@@ -141,10 +159,14 @@ def buat_user_default():
                 db.add(user_baru)
 
                 print(
-                    f"Akun '{user_data['username']}' berhasil dibuat otomatis!"
+                    f"Akun '{user_data['username']}' "
+                    "berhasil dibuat otomatis!"
                 )
 
         db.commit()
+
+        jumlah_user = db.query(User).count()
+        print("Jumlah akun dalam database:", jumlah_user)
 
     except Exception:
         db.rollback()
@@ -154,7 +176,7 @@ def buat_user_default():
         db.close()
 
 
-# Menjalankan seeding sebelum server menerima request
+# Jalankan seeding sebelum server menerima request
 buat_user_default()
 
 
@@ -174,7 +196,9 @@ def check_health():
     return {
         "status": "Online",
         "instansi": "BWS Sumatera III Pekanbaru",
-        "pesan": "Server FastAPI siap menerima request."
+        "pesan": "Server FastAPI siap menerima request.",
+        "database": "SQLite",
+        "penyimpanan_persisten": IS_PERSISTENT_STORAGE
     }
 
 
