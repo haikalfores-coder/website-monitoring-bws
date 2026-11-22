@@ -4,32 +4,55 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 import datetime
 import os
 
-# Menentukan lokasi database
-# Railway menggunakan Volume di /app/data
-# Komputer lokal menggunakan database.db di folder proyek
-if os.getenv("RAILWAY_ENVIRONMENT"):
-    DATABASE_PATH = "/app/data/database.db"
+# ==========================================
+# KONFIGURASI LOKASI DATABASE
+# ==========================================
+
+RAILWAY_DATA_DIR = "/app/data"
+
+# Jika direktori Volume Railway tersedia, gunakan database di Volume.
+# Jika tidak, gunakan database lokal.
+if os.path.isdir(RAILWAY_DATA_DIR):
+    DATABASE_PATH = os.path.join(RAILWAY_DATA_DIR, "database.db")
 else:
     DATABASE_PATH = "./database.db"
 
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
-# Pembuatan Engine SQLite
+print("Lokasi database yang digunakan:", DATABASE_PATH)
+
+
+# ==========================================
+# PEMBUATAN ENGINE SQLITE
+# ==========================================
+
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False}
 )
 
-# Pembuatan session untuk berinteraksi dengan database
+
+# ==========================================
+# SESSION DATABASE
+# ==========================================
+
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
-# Base class untuk mendefinisikan model tabel
+
+# ==========================================
+# BASE MODEL
+# ==========================================
+
 Base = declarative_base()
 
+
+# ==========================================
+# TABEL USER
+# ==========================================
 
 class User(Base):
     __tablename__ = "users"
@@ -39,6 +62,10 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)
 
+
+# ==========================================
+# TABEL KEGIATAN
+# ==========================================
 
 class Kegiatan(Base):
     __tablename__ = "kegiatan"
