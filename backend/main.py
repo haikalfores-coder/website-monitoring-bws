@@ -1,6 +1,5 @@
 import os
 import uvicorn
-import sqlite3
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  # <-- TAMBAHAN WAJIB
@@ -15,7 +14,7 @@ app = FastAPI(
     description="Sistem backend untuk monitoring kegiatan, dikelola oleh Admin dan dipantau oleh Superuser.",
     version="1.0.0"
 )
-print("Versi SQLite:", sqlite3.sqlite_version)
+
 # Konfigurasi CORS
 origins = ["*"]
 
