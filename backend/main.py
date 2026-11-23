@@ -1,135 +1,52 @@
-
 import os
 import uvicorn
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from passlib.context import CryptContext
-from sqlalchemy import text
+from fastapi.staticfiles import StaticFiles  # <-- TAMBAHAN WAJIB
+from passlib.context import CryptContext  
 
 # Import rute dan database
 from routes import router
-from models import Base, engine, SessionLocal, User
-
-
-# --------------------------------------------------
-# KONFIGURASI LOKASI PENYIMPANAN
-# --------------------------------------------------
-
-DATA_DIR = "/app/data"
-
-# Jika direktori Volume tersedia, gunakan untuk database dan upload.
-# Jika tidak, gunakan folder lokal.
-if os.path.isdir(DATA_DIR):
-    IS_PERSISTENT_STORAGE = True
-    UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
-else:
-    IS_PERSISTENT_STORAGE = False
-    UPLOAD_DIR = "./uploads"
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-# --------------------------------------------------
-# INISIALISASI FASTAPI
-# --------------------------------------------------
+from models import Base, engine, SessionLocal, User  
 
 app = FastAPI(
     title="API Monitoring BWS Sumatera III",
-    description=(
-        "Sistem backend untuk monitoring kegiatan, "
-        "dikelola oleh Admin dan dipantau oleh Superuser."
-    ),
+    description="Sistem backend untuk monitoring kegiatan, dikelola oleh Admin dan dipantau oleh Superuser.",
     version="1.0.0"
 )
 
-
-# --------------------------------------------------
-# KONFIGURASI CORS
-# --------------------------------------------------
-
+# Konfigurasi CORS
 origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"], 
     allow_headers=["*"],
 )
 
+# --- TAMBAHAN WAJIB: BUAT DAN BUKA AKSES FOLDER UPLOADS ---
+os.makedirs("uploads", exist_ok=True) # Buat folder otomatis jika belum ada
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# ---------------------------------------------------------
 
-# --------------------------------------------------
-# AKSES FOLDER UPLOADS
-# --------------------------------------------------
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory=UPLOAD_DIR),
-    name="uploads"
-)
-
-
-# --------------------------------------------------
-# PEMERIKSAAN KONFIGURASI DATABASE DAN VOLUME
-# --------------------------------------------------
-
-print("\n========== PEMERIKSAAN DATABASE ==========")
-print("Lingkungan Railway:", bool(os.getenv("RAILWAY_ENVIRONMENT")))
-print("Folder /app/data tersedia:", os.path.isdir(DATA_DIR))
-print("Penyimpanan persisten terdeteksi:", IS_PERSISTENT_STORAGE)
-print("Lokasi database:", engine.url.database)
-print("Lokasi folder upload:", UPLOAD_DIR)
-print("Folder upload tersedia:", os.path.isdir(UPLOAD_DIR))
-
-
-# --------------------------------------------------
-# MEMBUAT TABEL DATABASE
-# --------------------------------------------------
-
+# Membuat tabel di database saat server pertama kali berjalan
 Base.metadata.create_all(bind=engine)
 
-# Memeriksa versi SQLite yang digunakan database
-with engine.connect() as connection:
-    sqlite_version = connection.execute(
-        text("SELECT sqlite_version()")
-    ).scalar_one()
-
-    database_integrity = connection.execute(
-        text("PRAGMA integrity_check")
-    ).scalar_one()
-
-print("Versi SQLite database:", sqlite_version)
-print("Pemeriksaan integritas database:", database_integrity)
-print("==========================================\n")
-
-
-# --------------------------------------------------
-# AUTO-SEEDING USER DEFAULT
-# --------------------------------------------------
-
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
-
+# --- FUNGSI AUTO-SEEDING (Membuat User Default Otomatis) ---
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def buat_user_default():
     db = SessionLocal()
-
     try:
-        # Hapus akun admin dan super lama jika masih ada
-        akun_lama = db.query(User).filter(
-            User.username.in_(["admin", "super"])
-        ).all()
-
+        # Hapus akun 'admin' dan 'super' lama jika ada
+        akun_lama = db.query(User).filter(User.username.in_(["admin", "super"])).all()
         for akun in akun_lama:
             db.delete(akun)
             print(f"Akun lama '{akun.username}' berhasil dihapus!")
 
-        # Daftar akun default:
-        # 4 Admin dan 3 Superuser
+        # Daftar akun default: Tepat 4 Admin dan 3 Superuser
         default_users = [
             {"username": "admin1", "password": "admin1", "role": "admin"},
             {"username": "admin2", "password": "admin2", "role": "admin"},
@@ -141,81 +58,40 @@ def buat_user_default():
         ]
 
         for user_data in default_users:
-            existing_user = db.query(User).filter(
-                User.username == user_data["username"]
-            ).first()
-
+            # Cek apakah username sudah ada di database
+            existing_user = db.query(User).filter(User.username == user_data["username"]).first()
+            
             if not existing_user:
-                hashed_password = pwd_context.hash(
-                    user_data["password"]
-                )
-
+                hashed_password = pwd_context.hash(user_data["password"])
+                # Menyesuaikan dengan kolom 'password_hash' di model Anda
                 user_baru = User(
-                    username=user_data["username"],
-                    password_hash=hashed_password,
+                    username=user_data["username"], 
+                    password_hash=hashed_password, 
                     role=user_data["role"]
                 )
-
                 db.add(user_baru)
-
-                print(
-                    f"Akun '{user_data['username']}' "
-                    "berhasil dibuat otomatis!"
-                )
+                print(f"Akun '{user_data['username']}' berhasil dibuat otomatis!")
 
         db.commit()
-
-        jumlah_user = db.query(User).count()
-        print("Jumlah akun dalam database:", jumlah_user)
-
-    except Exception:
-        db.rollback()
-        raise
-
     finally:
         db.close()
 
-
-# Jalankan seeding sebelum server menerima request
+# Jalankan fungsi seeding sebelum server menerima request
 buat_user_default()
+# -----------------------------------------------------------
 
-
-# --------------------------------------------------
-# MENGHUBUNGKAN ROUTES
-# --------------------------------------------------
-
+# Menghubungkan endpoint API dari file routes.py
 app.include_router(router)
-
-
-# --------------------------------------------------
-# ENDPOINT PEMERIKSAAN SERVER
-# --------------------------------------------------
 
 @app.get("/")
 def check_health():
     return {
         "status": "Online",
         "instansi": "BWS Sumatera III Pekanbaru",
-        "pesan": "Server FastAPI siap menerima request.",
-        "database": "SQLite",
-        "penyimpanan_persisten": IS_PERSISTENT_STORAGE
+        "pesan": "Server FastAPI siap menerima request."
     }
-
-
-# --------------------------------------------------
-# MENJALANKAN SERVER
-# --------------------------------------------------
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-
-    is_dev = (
-        os.environ.get("ENVIRONMENT", "production") == "development"
-    )
-
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        reload=is_dev
-    )
+    is_dev = os.environ.get("ENVIRONMENT", "production") == "development"
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=is_dev)
