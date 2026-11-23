@@ -1,62 +1,57 @@
 import { defineStore } from 'pinia'
 
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '')
+
 export const useAuthStore = defineStore('auth', {
-  // Membaca state awal dari localStorage agar sesi tetap terjaga saat halaman di-refresh
+  // State awal dibaca dari localStorage agar sesi tetap ada saat halaman di-refresh
   state: () => ({
     username: localStorage.getItem('username') || null,
     role: localStorage.getItem('role') || null,
+    token: localStorage.getItem('token') || null, // BARU: token JWT
     isAuthenticated: localStorage.getItem('isAuthenticated') === 'true'
   }),
-  
+
   actions: {
     async login(username, password) {
       try {
-        // Mencegah error 308/405 dengan menghapus garis miring berlebih di akhir URL dari Vercel
-        const cleanUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-        
-        // Terhubung langsung ke backend FastAPI menggunakan cleanUrl
-        const response = await fetch(`${cleanUrl}/api/login`, {
+        const response = await fetch(`${API_URL}/api/login`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          
-          // Simpan ke state Pinia
-          this.username = data.username
-          this.role = data.role // 'admin' atau 'superuser'
-          this.isAuthenticated = true
+        if (!response.ok) return false
 
-          // Simpan ke localStorage agar tidak hilang saat di-refresh
-          localStorage.setItem('username', data.username)
-          localStorage.setItem('role', data.role)
-          localStorage.setItem('isAuthenticated', 'true')
+        const data = await response.json()
 
-          return true
-        }
+        // Simpan ke state Pinia
+        this.username = data.username
+        this.role = data.role // 'admin' atau 'superuser'
+        this.token = data.access_token // BARU
+        this.isAuthenticated = true
 
-        // Jika respons server gagal (misal salah password), kembalikan false
-        return false
+        // Simpan ke localStorage
+        localStorage.setItem('username', data.username)
+        localStorage.setItem('role', data.role)
+        localStorage.setItem('token', data.access_token) // BARU
+        localStorage.setItem('isAuthenticated', 'true')
+
+        return true
       } catch (error) {
         console.error('Terjadi kesalahan saat login:', error)
-        // Jika koneksi server putus, langsung kembalikan false
         return false
       }
     },
 
     logout() {
-      // Hapus state saat pengguna keluar
       this.username = null
       this.role = null
+      this.token = null // BARU
       this.isAuthenticated = false
 
-      // Hapus data dari localStorage
       localStorage.removeItem('username')
       localStorage.removeItem('role')
+      localStorage.removeItem('token') // BARU
       localStorage.removeItem('isAuthenticated')
     }
   }
