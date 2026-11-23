@@ -1,58 +1,32 @@
-
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 import datetime
-import os
+import os # Tambahkan modul os untuk membaca environment variable
 
-# ==========================================
-# KONFIGURASI LOKASI DATABASE
-# ==========================================
+# Mengambil URL Database dari layanan hosting (jika ada), 
+# jika tidak ada (sedang di komputer lokal), gunakan SQLite
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
 
-RAILWAY_DATA_DIR = "/app/data"
+# Menyesuaikan penamaan prefix PostgreSQL (Hosting seperti Render sering menggunakan 'postgres://', 
+# sedangkan SQLAlchemy versi baru membutuhkan 'postgresql://')
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Jika direktori Volume Railway tersedia, gunakan database di Volume.
-# Jika tidak, gunakan database lokal.
-if os.path.isdir(RAILWAY_DATA_DIR):
-    DATABASE_PATH = os.path.join(RAILWAY_DATA_DIR, "database.db")
+# Pembuatan Engine
+# Argumen 'check_same_thread' HANYA boleh digunakan untuk SQLite. 
+# Jika dipakai di PostgreSQL (saat hosting), aplikasi akan error.
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
 else:
-    DATABASE_PATH = "./database.db"
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+# Pembuatan session untuk berinteraksi dengan database
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-print("Lokasi database yang digunakan:", DATABASE_PATH)
-
-
-# ==========================================
-# PEMBUATAN ENGINE SQLITE
-# ==========================================
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
-
-
-# ==========================================
-# SESSION DATABASE
-# ==========================================
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
-
-# ==========================================
-# BASE MODEL
-# ==========================================
-
+# Base class untuk mendefinisikan model tabel
 Base = declarative_base()
-
-
-# ==========================================
-# TABEL USER
-# ==========================================
 
 class User(Base):
     __tablename__ = "users"
@@ -60,12 +34,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False)
-
-
-# ==========================================
-# TABEL KEGIATAN
-# ==========================================
+    role = Column(String, nullable=False) # Menyimpan nilai 'admin' atau 'superuser'
 
 class Kegiatan(Base):
     __tablename__ = "kegiatan"
@@ -73,11 +42,11 @@ class Kegiatan(Base):
     id = Column(Integer, primary_key=True, index=True)
     nama_kegiatan = Column(String, index=True, nullable=False)
     item_kegiatan = Column(String, nullable=False)
-    foto_url = Column(String, nullable=True)
-    preview_url = Column(String, nullable=True)
-    progress = Column(Integer, default=0)
-    status = Column(String, default="Menunggu")
-    tanggal_mulai = Column(String, nullable=True)
-    tanggal_selesai = Column(String, nullable=True)
-    laporan_ready = Column(Boolean, default=False)
+    foto_url = Column(String, nullable=True) # URL atau nama file gambar
+    preview_url = Column(String, nullable=True) # Menyimpan Blob URL / Base64 preview
+    progress = Column(Integer, default=0) # Persentase 0-100
+    status = Column(String, default="Menunggu") # Menunggu, Berjalan, Ditunda, Selesai
+    tanggal_mulai = Column(String, nullable=True) # Waktu mulai kegiatan
+    tanggal_selesai = Column(String, nullable=True) # Waktu selesai kegiatan
+    laporan_ready = Column(Boolean, default=False) # Status penyiapan laporan oleh admin
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
